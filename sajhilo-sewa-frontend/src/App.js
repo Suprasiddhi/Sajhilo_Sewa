@@ -1,5 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import UserLoginPage from "./pages/UserLoginPage";
+import UserRegisterPage from "./pages/UserRegisterPage";
 import HomePage from "./pages/HomePage";
 import PracticePage from "./pages/PracticePage";
 import AdminLoginPage from "./pages/AdminLoginPage";
@@ -15,6 +17,8 @@ function App() {
         {/* Admin Routes - No Global Layout */}
         <Route path="/admin" element={<AdminLoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/login" element={<UserLoginPage />} />
+        <Route path="/register" element={<UserRegisterPage />} />
 
         {/* User Routes - With Layout */}
         <Route

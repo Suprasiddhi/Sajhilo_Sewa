@@ -1,0 +1,20 @@
+{
+    "python.analysis.extraPaths": [
+        "./sajhilo-sewa-backend"
+    ],
+    "python.analysis.autoSearchPaths": true,
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5433,
+            "driver": "PostgreSQL",
+            "name": "PG local",
+            "database": "sajhilosewadb",
+            "username": "postgres",
+            "password": "Supra",
+            "connectionTimeout": 30
+        }
+    ]
+}

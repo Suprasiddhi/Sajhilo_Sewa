@@ -1,23 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './PracticePage.module.css';
 
 const PracticePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [gestures, setGestures] = useState([]);
+  const [loading, setLoading] = useState(true);
   
-  const categories = ['All', 'Alphabet', 'Numbers', 'Common Phrases', 'Greetings'];
-  
-  const gestures = [
-    { id: 1, title: 'Alphabet A', category: 'Alphabet', difficulty: 'Easy', duration: '0:15' },
-    { id: 2, title: 'Number 1-10', category: 'Numbers', difficulty: 'Easy', duration: '0:45' },
-    { id: 3, title: 'Thank You', category: 'Greetings', difficulty: 'Medium', duration: '0:20' },
-    { id: 4, title: 'How are you?', category: 'Greetings', difficulty: 'Medium', duration: '0:30' },
-    { id: 5, title: 'I need help', category: 'Common Phrases', difficulty: 'Hard', duration: '0:40' },
-    { id: 6, title: 'Alphabet B', category: 'Alphabet', difficulty: 'Easy', duration: '0:15' },
-  ];
+  const categories = ['All', 'Alphabets', 'Numbers', 'Words', 'Common'];
 
-  const filteredGestures = selectedCategory === 'All' 
-    ? gestures 
-    : gestures.filter(g => g.category === selectedCategory);
+  useEffect(() => {
+    fetchGestures();
+  }, [selectedCategory]);
+
+  const fetchGestures = async () => {
+    setLoading(true);
+    try {
+      const categoryParam = selectedCategory === 'All' ? 'all' : selectedCategory.toLowerCase();
+      const response = await fetch(`http://localhost:8000/gestures/?category=${categoryParam}`);
+      if (response.ok) {
+        const data = await response.json();
+        setGestures(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch gestures:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -39,28 +48,36 @@ const PracticePage = () => {
       </div>
 
       <div className={styles.videoGrid}>
-        {filteredGestures.map(gesture => (
-          <div key={gesture.id} className={styles.videoCard}>
-            <div className={styles.thumbnail}>
-              <div className={styles.playIcon}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3" />
-                </svg>
+        {loading ? (
+          <div className={styles.loading}>Loading gestures...</div>
+        ) : gestures.length > 0 ? (
+          gestures.map(gesture => (
+            <div key={gesture.id} className={styles.videoCard}>
+              <div className={styles.thumbnail}>
+                {gesture.sections && gesture.sections[0] && (
+                  <video src={gesture.sections[0].video_url} className={styles.previewVideo} muted />
+                )}
+                <div className={styles.playIcon}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                </div>
               </div>
-              <span className={styles.duration}>{gesture.duration}</span>
-            </div>
-            <div className={styles.cardContent}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.gestureTitle}>{gesture.title}</h3>
-                <span className={`${styles.badge} ${styles[gesture.difficulty.toLowerCase()]}`}>
-                  {gesture.difficulty}
-                </span>
+              <div className={styles.cardContent}>
+                <div className={styles.cardHeader}>
+                  <h3 className={styles.gestureTitle}>{gesture.name}</h3>
+                </div>
+                <p className={styles.category}>{gesture.category}</p>
+                <div className={styles.sectionCount}>
+                  {gesture.sections?.length || 0} Sections
+                </div>
+                <button className={styles.practiceBtn}>Start Practice</button>
               </div>
-              <p className={styles.category}>{gesture.category}</p>
-              <button className={styles.practiceBtn}>Start Practice</button>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <div className={styles.empty}>No gestures found in this category.</div>
+        )}
       </div>
     </div>
   );

@@ -7,31 +7,122 @@ const AdminDashboard = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gestureData, setGestureData] = useState({
-    title: '',
+    name: '',
     category: 'alphabets',
-    description: '',
-    videos: [{ id: Date.now(), file: null }]
+    sections: [{ 
+      id: Date.now(), 
+      title: '', 
+      description: '', 
+      media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
+    }]
   });
 
-  const handleAddMoreVideo = () => {
+  const handleAddMoreSection = () => {
     setGestureData(prev => ({
       ...prev,
-      videos: [...prev.videos, { id: Date.now(), file: null }]
+      sections: [...prev.sections, { 
+        id: Date.now(), 
+        title: '', 
+        description: '', 
+        media: [{ id: Date.now() + 1, media_type: 'video', url: '', file: null }] 
+      }]
     }));
   };
 
-  const handleFileChange = (id, file) => {
+  const handleAddMedia = (sectionId) => {
     setGestureData(prev => ({
       ...prev,
-      videos: prev.videos.map(v => v.id === id ? { ...v, file } : v)
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        media: [...s.media, { id: Date.now(), media_type: 'video', url: '', file: null }]
+      } : s)
     }));
   };
 
-  const handleRemoveVideo = (id) => {
+  const handleMediaChange = (sectionId, mediaId, field, value) => {
     setGestureData(prev => ({
       ...prev,
-      videos: prev.videos.filter(v => v.id !== id)
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        media: s.media.map(m => m.id === mediaId ? { ...m, [field]: value } : m)
+      } : s)
     }));
+  };
+
+  const handleRemoveMedia = (sectionId, mediaId) => {
+    setGestureData(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === sectionId ? {
+        ...s,
+        media: s.media.filter(m => m.id !== mediaId)
+      } : s)
+    }));
+  };
+
+  const handleSectionChange = (id, field, value) => {
+    setGestureData(prev => ({
+      ...prev,
+      sections: prev.sections.map(s => s.id === id ? { ...s, [field]: value } : s)
+    }));
+  };
+
+  const handleRemoveSection = (id) => {
+    setGestureData(prev => ({
+      ...prev,
+      sections: prev.sections.filter(s => s.id !== id)
+    }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      // 1. Upload all files first to get URLs
+      const updatedSections = await Promise.all(gestureData.sections.map(async (section) => {
+        const updatedMedia = await Promise.all(section.media.map(async (mediaItem) => {
+          if (mediaItem.file) {
+            const formData = new FormData();
+            formData.append('file', mediaItem.file);
+            const res = await fetch('http://localhost:8000/gestures/upload', {
+              method: 'POST',
+              body: formData
+            });
+            const data = await res.json();
+            return { ...mediaItem, url: data.url };
+          }
+          return mediaItem;
+        }));
+        return { ...section, media: updatedMedia };
+      }));
+
+      // 2. Submit the full gesture data
+      const finalGesture = {
+        name: gestureData.name,
+        category: gestureData.category,
+        sections: updatedSections.map(s => ({
+          title: s.title,
+          description: s.description,
+          media: s.media.map(m => ({
+            media_type: m.media_type,
+            url: m.url
+          }))
+        }))
+      };
+
+      const res = await fetch('http://localhost:8000/gestures/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(finalGesture)
+      });
+
+      if (res.ok) {
+        setIsModalOpen(false);
+        // Refresh gestures or show success
+      } else {
+        alert("Failed to add gesture");
+      }
+    } catch (err) {
+      console.error("Error submitting gesture:", err);
+      alert("Error submitting gesture");
+    }
   };
 
   const sections = [
@@ -175,13 +266,13 @@ const AdminDashboard = () => {
 
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Gesture Name (Title)</label>
+                <label className={styles.formLabel}>Main Gesture Name</label>
                 <input 
                   type="text" 
                   className={styles.formInput} 
                   placeholder="e.g. Namaste"
-                  value={gestureData.title}
-                  onChange={(e) => setGestureData({...gestureData, title: e.target.value})}
+                  value={gestureData.name}
+                  onChange={(e) => setGestureData({...gestureData, name: e.target.value})}
                 />
               </div>
 
@@ -199,90 +290,125 @@ const AdminDashboard = () => {
                 </select>
               </div>
 
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Description</label>
-                <textarea 
-                  className={styles.formTextarea} 
-                  placeholder="Describe the gesture movements..."
-                  value={gestureData.description}
-                  onChange={(e) => setGestureData({...gestureData, description: e.target.value})}
-                ></textarea>
+              <div className={styles.sectionDivider}>
+                <span>Gesture Sections / Contexts</span>
               </div>
-
-              <div className={styles.videoSection}>
-                <div className={styles.videoHeader}>
-                  <label className={styles.formLabel}>Video Collections</label>
-                </div>
-                
-                {gestureData.videos.map((v, index) => (
-                  <div key={v.id} className={styles.videoSlot}>
-                    <div 
-                      className={styles.dropzone}
-                      onClick={() => document.getElementById(`file-${v.id}`).click()}
-                      onDragOver={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                          handleFileChange(v.id, e.dataTransfer.files[0]);
-                        }
-                      }}
-                    >
-                      <svg className={styles.uploadIcon} width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      {v.file ? (
-                        <div className={styles.fileSelected}>
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          <span>{v.file.name}</span>
-                        </div>
-                      ) : (
-                        <>
-                          <p>Drag & Drop or Click to upload Video {index + 1}</p>
-                          <span style={{ fontSize: '0.8rem' }}>MP4, WebM up to 50MB</span>
-                        </>
-                      )}
-                      <input 
-                        type="file" 
-                        id={`file-${v.id}`}
-                        style={{ display: 'none' }} 
-                        accept="video/*"
-                        onChange={(e) => handleFileChange(v.id, e.target.files[0])}
-                      />
-                    </div>
-                    {gestureData.videos.length > 1 && (
+              
+              {gestureData.sections.map((section, index) => (
+                <div key={section.id} className={styles.gestureSectionCard}>
+                  <header className={styles.sectionCardHeader}>
+                    <h4>Section {index + 1}</h4>
+                    {gestureData.sections.length > 1 && (
                       <button 
-                        className={styles.removeVideoBtn}
-                        onClick={() => handleRemoveVideo(v.id)}
-                        title="Remove video"
+                        className={styles.removeSectionBtn}
+                        onClick={() => handleRemoveSection(section.id)}
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
+                        Remove
                       </button>
                     )}
-                  </div>
-                ))}
+                  </header>
 
-                <button 
-                  className={styles.addMoreBtn}
-                  onClick={handleAddMoreVideo}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  <span>Add More Video</span>
-                </button>
-              </div>
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Section Title</label>
+                    <input 
+                      type="text" 
+                      className={styles.formInput} 
+                      placeholder="e.g. Front View"
+                      value={section.title}
+                      onChange={(e) => handleSectionChange(section.id, 'title', e.target.value)}
+                    />
+                  </div>
+
+                  <div className={styles.mediaList}>
+                    <label className={styles.formLabel}>Media (Videos / Images)</label>
+                    {section.media.map((mediaItem, mIndex) => (
+                      <div key={mediaItem.id} className={styles.mediaItemCard}>
+                        <div className={styles.mediaItemHeader}>
+                          <span>Media {mIndex + 1}</span>
+                          {section.media.length > 1 && (
+                            <button 
+                              className={styles.removeMediaBtn}
+                              onClick={() => handleRemoveMedia(section.id, mediaItem.id)}
+                            >
+                              &times;
+                            </button>
+                          )}
+                        </div>
+                        
+                        <div className={styles.formRow}>
+                          <div className={styles.formGroup}>
+                            <select 
+                              className={styles.formSelect}
+                              value={mediaItem.media_type}
+                              onChange={(e) => handleMediaChange(section.id, mediaItem.id, 'media_type', e.target.value)}
+                            >
+                              <option value="video">Video</option>
+                              <option value="image">Image</option>
+                            </select>
+                          </div>
+                          <div className={styles.formGroup} style={{ flex: 2 }}>
+                            <input 
+                              type="text" 
+                              className={styles.formInput} 
+                              placeholder="URL (Optional)..."
+                              value={mediaItem.url}
+                              onChange={(e) => handleMediaChange(section.id, mediaItem.id, 'url', e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div 
+                          className={styles.dropzoneSmall}
+                          onClick={() => document.getElementById(`file-${section.id}-${mediaItem.id}`).click()}
+                        >
+                          {mediaItem.file ? (
+                            <div className={styles.fileSelected}>
+                              <span>{mediaItem.file.name}</span>
+                            </div>
+                          ) : (
+                            <p>Upload File</p>
+                          )}
+                          <input 
+                            type="file" 
+                            id={`file-${section.id}-${mediaItem.id}`}
+                            style={{ display: 'none' }} 
+                            accept={mediaItem.media_type === 'video' ? 'video/*' : 'image/*'}
+                            onChange={(e) => handleMediaChange(section.id, mediaItem.id, 'file', e.target.files[0])}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <button 
+                      className={styles.addMediaBtn}
+                      onClick={() => handleAddMedia(section.id)}
+                    >
+                      + Add More Media
+                    </button>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.formLabel}>Description</label>
+                    <textarea 
+                      className={styles.formTextarea} 
+                      placeholder="Context for this specific video..."
+                      value={section.description}
+                      onChange={(e) => handleSectionChange(section.id, 'description', e.target.value)}
+                    ></textarea>
+                  </div>
+                </div>
+              ))}
+
+              <button 
+                className={styles.addSectionBtn}
+                onClick={handleAddMoreSection}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>Add Section</span>
+              </button>
             </div>
 
             <footer className={styles.modalFooter}>
@@ -292,7 +418,7 @@ const AdminDashboard = () => {
               >
                 Cancel
               </button>
-              <button className={styles.submitBtn}>
+              <button className={styles.submitBtn} onClick={handleSubmit}>
                 Add Gesture
               </button>
             </footer>
