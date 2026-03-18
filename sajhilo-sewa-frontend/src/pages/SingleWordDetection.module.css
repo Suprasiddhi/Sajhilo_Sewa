@@ -1,0 +1,113 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  min-height: 100vh;
+  animation: fadeIn 0.8s var(--ease);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  margin-bottom: 0;
+}
+
+.welcomeCard {
+  background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+  padding: 60px 48px;
+  border-radius: var(--border-radius);
+  color: white;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcomeCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  letter-spacing: -0.04em;
+  position: relative;
+  z-index: 1;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 650px;
+  line-height: 1.6;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: 1.8fr 1.2fr;
+  gap: 40px;
+}
+
+.mainColumn {
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.8s var(--ease) both;
+  animation-delay: 0.1s;
+}
+
+.sideColumn {
+  display: flex;
+  flex-direction: column;
+  animation: slideUp 0.8s var(--ease) both;
+  animation-delay: 0.2s;
+}
+
+.fullWidthRow {
+  grid-column: 1 / -1;
+  animation: slideUp 0.8s var(--ease) both;
+  animation-delay: 0.3s;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1200px) {
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .welcomeCard { padding: 40px 24px; }
+  
+  .title {
+    font-size: 2rem;
+  }
+  .subtitle { font-size: 1.125rem; }
+}
+
+.welcomeCard p{
+    font-size: 1rem;
+    line-height: 1;
+}

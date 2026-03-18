@@ -1,0 +1,19 @@
+.videoCard{
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(70, 130, 70, 0.06);
+    border: 1px solid #b9d2b9;
+}
+
+.cardHeader{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.cardHeader h2{
+    font-size: 1.25rem;
+    font-weight: 600;
+}

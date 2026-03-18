@@ -1,0 +1,113 @@
+.sidebar {
+  width: var(--sidebar-width);
+  height: 100vh;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 8px 48px;
+}
+
+.logoIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, var(--primary-green), var(--accent-green));
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 16px -4px rgba(56, 123, 90, 0.3);
+}
+
+.logoText {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.03em;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all var(--transition-speed) var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.navLink:hover {
+  background-color: var(--secondary-green);
+  color: var(--primary-green);
+  transform: translateX(4px);
+}
+
+.active {
+  background-color: var(--primary-green) !important;
+  color: white !important;
+  box-shadow: 0 10px 20px -5px rgba(56, 123, 90, 0.4);
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background-color: white;
+  border-radius: 0 4px 4px 0;
+}
+
+.footer {
+  padding-top: 32px;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 90px;
+    padding: 32px 12px;
+  }
+  
+  .logoText, .navLink span {
+    display: none;
+  }
+  
+  .logo {
+    padding: 0 0 48px;
+    justify-content: center;
+  }
+  
+  .navLink {
+    justify-content: center;
+    padding: 14px;
+    border-radius: 14px;
+  }
+}

@@ -1,0 +1,190 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  animation: fadeIn 0.8s var(--ease);
+}
+
+.header {
+  margin-bottom: 0;
+}
+
+.title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 12px;
+  letter-spacing: -0.04em;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  max-width: 800px;
+  line-height: 1.6;
+}
+
+.filters {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 4px 16px;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filterBtn {
+  padding: 12px 28px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 40px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
+  transition: all var(--transition-speed) var(--ease);
+}
+
+.filterBtn:hover {
+  transform: translateY(-2px);
+  color: var(--primary-green);
+  border-color: var(--primary-green);
+}
+
+.active {
+  background-color: var(--primary-green) !important;
+  color: white !important;
+  border-color: var(--primary-green);
+  box-shadow: 0 8px 16px -4px rgba(56, 123, 90, 0.4);
+}
+
+.videoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 32px;
+}
+
+.videoCard {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+  transition: all var(--transition-speed) var(--ease);
+  animation: slideUp 0.8s var(--ease) both;
+}
+
+.videoCard:hover {
+  transform: translateY(-12px);
+  border-color: var(--primary-green);
+  box-shadow: var(--shadow-lg);
+  background: white;
+}
+
+.thumbnail {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(135deg, hsl(var(--p-h), 20%, 90%) 0%, hsl(var(--p-h), 10%, 80%) 100%);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.playIcon {
+  width: 72px;
+  height: 72px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: var(--primary-green);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-speed) var(--ease);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.videoCard:hover .playIcon {
+  background-color: var(--primary-green);
+  color: white;
+  transform: scale(1.1);
+}
+
+.duration {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.cardContent {
+  padding: 24px;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.gestureTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.badge {
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.easy { background-color: #dcfce7; color: #166534; }
+.medium { background-color: #fef9c3; color: #854d0e; }
+.hard { background-color: #fee2e2; color: #991b1b; }
+
+.category {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.practiceBtn {
+  width: 100%;
+  padding: 16px;
+  background-color: hsl(var(--p-h), 10%, 98%);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  font-weight: 800;
+  color: var(--primary-green);
+  transition: all var(--transition-speed) var(--ease);
+}
+
+.videoCard:hover .practiceBtn {
+  background-color: var(--primary-green);
+  color: white;
+  border-color: var(--primary-green);
+  box-shadow: 0 10px 20px -5px rgba(56, 123, 90, 0.4);
+}
+
+@media (max-width: 640px) {
+  .videoGrid {
+    grid-template-columns: 1fr;
+  }
+}
