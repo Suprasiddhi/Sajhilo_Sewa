@@ -15,7 +15,7 @@ docker compose up -d --build
 
 Open:
 
-- Frontend: `http://localhost:3001`
+- Frontend: `http://localhost:3000`
 - Backend API: `http://localhost:8000`
 - Postgres: `localhost:5433`
 
