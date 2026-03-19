@@ -7,6 +7,7 @@ import PracticePage from "./pages/PracticePage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import SingleWordDetection from "./pages/SingleWordDetection";
+import UpdateProfilePage from "./pages/UpdateProfilePage";
 import MainLayout from "./components/layout/MainLayout";
 import './App.css';
 
@@ -19,6 +20,7 @@ function App() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/login" element={<UserLoginPage />} />
         <Route path="/register" element={<UserRegisterPage />} />
+        <Route path="/updateprofile" element={<UpdateProfilePage />} />
 
         {/* User Routes - With Layout */}
         <Route

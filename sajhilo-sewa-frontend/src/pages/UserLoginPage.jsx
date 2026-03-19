@@ -60,7 +60,7 @@ const UserLoginPage = () => {
               />
               Remember me
             </label>
-            <Link to="/forgot-password" className={styles.forgotPassword}>
+            <Link to="/updateprofile" className={styles.forgotPassword}>
               Forgot password?
             </Link>
           </div>

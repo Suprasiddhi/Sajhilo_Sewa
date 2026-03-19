@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "frontend": "cd sajhilo-sewa-frontend && npm run dev",
-    "backend": "cd sajhilo-sewa-backend && uvicorn main:app --reload",
+    "backend": "cd sajhilo-sewa-backend && .\\venv\\Scripts\\python.exe -m uvicorn main:app --reload",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "keywords": [],

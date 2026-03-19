@@ -7,6 +7,7 @@ const UserRegisterPage = () => {
     firstName: '',
     lastName: '',
     email: '',
+    username: '',
     password: '',
     confirmPassword: ''
   });
@@ -38,7 +39,7 @@ const UserRegisterPage = () => {
         <form className={styles.form} onSubmit={handleSubmit}>
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
-              <label className={styles.label}>First Name</label>
+              <label className={styles.label}>First Name *</label>
               <input
                 type="text"
                 name="firstName"
@@ -50,7 +51,7 @@ const UserRegisterPage = () => {
               />
             </div>
             <div className={styles.inputGroup}>
-              <label className={styles.label}>Last Name</label>
+              <label className={styles.label}>Last Name *</label>
               <input
                 type="text"
                 name="lastName"
@@ -64,7 +65,7 @@ const UserRegisterPage = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Email Address</label>
+            <label className={styles.label}>Email Address *</label>
             <input
               type="email"
               name="email"
@@ -77,7 +78,20 @@ const UserRegisterPage = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Password</label>
+            <label className={styles.label}>Username *</label>
+            <input
+              type="text"
+              name="username"
+              className={styles.input}
+              placeholder="sajhilo_sewa"
+              value={formData.username}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>Password *</label>
             <input
               type="password"
               name="password"
@@ -90,7 +104,7 @@ const UserRegisterPage = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Confirm Password</label>
+            <label className={styles.label}>Confirm Password *</label>
             <input
               type="password"
               name="confirmPassword"
