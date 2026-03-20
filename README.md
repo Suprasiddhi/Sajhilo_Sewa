@@ -44,7 +44,7 @@ docker compose logs -f
 - Path: `sajhilo-sewa-backend`
 - Host/container port: `8000`
 - Uses `DATABASE_URL` from Docker Compose:
-  - `postgresql://postgres:postgres@db:5432/sajhilosewadb`
+  - `postgresql://postgres:Supra@db:5432/sajhilosewadb`
 
 ### Database
 
@@ -53,7 +53,7 @@ docker compose logs -f
 - Credentials:
   - DB: `sajhilosewadb`
   - User: `postgres`
-  - Password: `postgres`
+  - Password: `Supra`
 
 ## Local Run Without Docker
 

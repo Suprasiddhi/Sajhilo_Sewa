@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './UserRegisterPage.module.css';
 
 const UserRegisterPage = () => {
@@ -11,16 +11,53 @@ const UserRegisterPage = () => {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Register attempt:', formData);
-    // Functionality not integrated as per request
+    setError('');
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+
+      console.log('Registration successful:', data);
+      navigate('/login', { state: { message: 'Registration successful! Please log in.' } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -37,6 +74,7 @@ const UserRegisterPage = () => {
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.formRow}>
             <div className={styles.inputGroup}>
               <label className={styles.label}>First Name *</label>
@@ -116,8 +154,8 @@ const UserRegisterPage = () => {
             />
           </div>
 
-          <button type="submit" className={styles.submitButton}>
-            Get Started
+          <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            {isLoading ? 'Creating Account...' : 'Get Started'}
           </button>
         </form>
 

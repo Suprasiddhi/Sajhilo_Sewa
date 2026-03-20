@@ -1,16 +1,53 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styles from './UserLoginPage.module.css';
 
 const UserLoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', { email, password, rememberMe });
-    // Functionality not integrated as per request
+    setError('');
+    setIsLoading(true);
+
+    try {
+      // Backend expects OAuth2PasswordRequestForm (form-data)
+      const formDetails = new URLSearchParams();
+      formDetails.append('username', email); // backend treats username as email
+      formDetails.append('password', password);
+
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formDetails,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Login failed');
+      }
+
+      console.log('Login successful:', data);
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
+      // Redirect to home
+      navigate('/');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,6 +64,8 @@ const UserLoginPage = () => {
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+          {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.inputGroup}>
             <label className={styles.label}>Email Address</label>
             <input
@@ -65,8 +104,8 @@ const UserLoginPage = () => {
             </Link>
           </div>
 
-          <button type="submit" className={styles.submitButton}>
-            Sign In
+          <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
