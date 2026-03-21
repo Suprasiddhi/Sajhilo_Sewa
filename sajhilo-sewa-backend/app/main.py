@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
 from app import models
-from app.routers import auth
+from app.routers import auth, gestures, stats
 
 app = FastAPI(title="Sajhilo Sewa API")
 
@@ -31,6 +31,8 @@ app.add_middleware(
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
+app.include_router(gestures.router)
+app.include_router(stats.router)
 
 # ── Health check ──────────────────────────────────────────────────────────────
 @app.get("/")

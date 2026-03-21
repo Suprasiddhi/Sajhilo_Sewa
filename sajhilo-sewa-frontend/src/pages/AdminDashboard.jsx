@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import styles from './AdminDashboard.module.css';
 
 const AdminDashboard = () => {
-  const [activeSection, setActiveSection] = useState('gestures');
+  const [activeSection, setActiveSection] = useState('overview');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [stats, setStats] = useState({
+    total_users: 0,
+    all_usernames: [],
+    total_gestures: 0,
+    latest_gestures: []
+  });
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [gestureData, setGestureData] = useState({
     name: '',
@@ -16,6 +23,30 @@ const AdminDashboard = () => {
       media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
     }]
   });
+
+  React.useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://localhost:8000/admin/stats/', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch (err) {
+      console.error("Error fetching stats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleAddMoreSection = () => {
     setGestureData(prev => ({
@@ -127,6 +158,18 @@ const AdminDashboard = () => {
 
   const sections = [
     { 
+      id: 'overview', 
+      label: 'Overview',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
+      )
+    },
+    { 
       id: 'gestures', 
       label: 'Gestures',
       icon: (
@@ -184,6 +227,90 @@ const AdminDashboard = () => {
         </aside>
 
         <main className={styles.content}>
+          {activeSection === 'overview' && (
+            <div className={styles.sectionContent}>
+              <header className={styles.header}>
+                <h1 className={styles.title}>Dashboard Overview</h1>
+              </header>
+
+              <div className={styles.statsGrid}>
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon} style={{ background: '#e0f2fe', color: '#0ea5e9' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statLabel}>Total Users</span>
+                    <h2 className={styles.statValue}>{stats.total_users}</h2>
+                  </div>
+                </div>
+
+                <div className={styles.statCard}>
+                  <div className={styles.statIcon} style={{ background: '#f0fdf4', color: '#22c55e' }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                      <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                      <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                      <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+                    </svg>
+                  </div>
+                  <div className={styles.statInfo}>
+                    <span className={styles.statLabel}>Total Gestures</span>
+                    <h2 className={styles.statValue}>{stats.total_gestures}</h2>
+                  </div>
+                </div>
+              </div>
+
+              <div className={styles.analysisGrid}>
+                <div className={styles.analysisCard}>
+                  <h3 className={styles.cardTitle}>Usernames</h3>
+                  <div className={styles.scrollList}>
+                    {stats.all_usernames.length > 0 ? (
+                      stats.all_usernames.map((un, i) => (
+                        <div key={i} className={styles.listItem}>
+                          <div className={styles.userAvatar}>{un[0].toUpperCase()}</div>
+                          <span className={styles.userName}>{un}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className={styles.emptyText}>No users found</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.analysisCard}>
+                  <h3 className={styles.cardTitle}>Latest Practice Videos</h3>
+                  <div className={styles.scrollList}>
+                    {stats.latest_gestures.length > 0 ? (
+                      stats.latest_gestures.map((gesture) => (
+                        <div key={gesture.id} className={styles.gestureItem}>
+                          <div className={styles.gesturePreview}>
+                            {gesture.sections?.[0]?.media?.[0]?.url && (
+                              <video src={gesture.sections[0].media[0].url} muted />
+                            )}
+                            {!gesture.sections?.[0]?.media?.[0]?.url && (
+                              <div className={styles.noVideo}>No Video</div>
+                            )}
+                          </div>
+                          <div className={styles.gestureInfo}>
+                            <span className={styles.gestureName}>{gesture.name}</span>
+                            <span className={styles.gestureCat}>{gesture.category}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className={styles.emptyText}>No gestures added yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {activeSection === 'gestures' && (
             <div className={styles.sectionContent}>
               <header className={styles.header}>
