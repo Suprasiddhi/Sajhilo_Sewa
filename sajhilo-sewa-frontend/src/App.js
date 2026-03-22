@@ -4,6 +4,7 @@ import UserLoginPage from "./pages/UserLoginPage";
 import UserRegisterPage from "./pages/UserRegisterPage";
 import HomePage from "./pages/HomePage";
 import PracticePage from "./pages/PracticePage";
+import GestureDetailPage from "./pages/GestureDetailPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import SingleWordDetection from "./pages/SingleWordDetection";
@@ -31,6 +32,7 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/single-word-detection" element={<SingleWordDetection />} />
                 <Route path="/practice" element={<PracticePage />} />
+                <Route path="/work/:id/:title" element={<GestureDetailPage />} />
                 <Route path="/history" element={<div style={{ padding: '40px', textAlign: 'center' }}><h2>History Coming Soon</h2></div>} />
                 <Route path="/settings" element={<div style={{ padding: '40px', textAlign: 'center' }}><h2>Settings Coming Soon</h2></div>} />
               </Routes>

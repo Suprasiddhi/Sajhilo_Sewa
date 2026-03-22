@@ -95,8 +95,10 @@ def login(
     form: OAuth2PasswordRequestForm = Depends(),
     db:   Session                   = Depends(get_db),
 ):
-    # 1. Lookup by email
-    user = db.query(models.User).filter(models.User.email == form.username).first()
+    # 1. Lookup by email OR username
+    user = db.query(models.User).filter(
+        (models.User.email == form.username) | (models.User.username == form.username)
+    ).first()
  
     # 2. Verify — same error for both "not found" and "wrong password"
     #    (prevents user enumeration attacks)

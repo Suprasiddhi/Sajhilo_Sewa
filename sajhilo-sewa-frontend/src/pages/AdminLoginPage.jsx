@@ -3,18 +3,43 @@ import { useNavigate } from 'react-router-dom';
 import styles from './AdminLoginPage.module.css';
 
 const AdminLoginPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('admin');
+  const [password, setPassword] = useState('admin');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
+    setError('');
+    
+    try {
+      const formDetails = new URLSearchParams();
+      // Admin might be logging in with their email, but we'll use the 'username' field 
+      // as the login identifier for the OAuth2 form.
+      formDetails.append('username', username); 
+      formDetails.append('password', password);
+
+      const response = await fetch('http://localhost:8000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formDetails,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Login failed');
+      }
+
+      localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('isAdminAuthenticated', 'true');
+      localStorage.setItem('user', JSON.stringify(data.user));
+      
       navigate('/admin/dashboard');
-    } else {
-      setError('Invalid username or password');
+    } catch (err) {
+      setError(err.message);
     }
   };
 

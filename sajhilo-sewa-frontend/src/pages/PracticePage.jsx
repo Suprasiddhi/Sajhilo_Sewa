@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './PracticePage.module.css';
 
 const PracticePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [gestures, setGestures] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
   const categories = ['All', 'Alphabets', 'Numbers', 'Words', 'Common'];
 
@@ -52,10 +54,21 @@ const PracticePage = () => {
           <div className={styles.loading}>Loading gestures...</div>
         ) : gestures.length > 0 ? (
           gestures.map(gesture => (
-            <div key={gesture.id} className={styles.videoCard}>
+            <div 
+              key={gesture.id} 
+              className={styles.videoCard} 
+              onClick={() => {
+                const titleSlug = gesture.name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                navigate(`/work/${gesture.id}/${titleSlug}`);
+              }}
+              style={{ cursor: 'pointer' }}
+            >
               <div className={styles.thumbnail}>
-                {gesture.sections && gesture.sections[0] && (
-                  <video src={gesture.sections[0].video_url} className={styles.previewVideo} muted />
+                {gesture.sections && gesture.sections[0] && gesture.sections[0].media && (
+                  (() => {
+                    const videoMedia = gesture.sections[0].media.find(m => m.media_type === 'video') || gesture.sections[0].media[0];
+                    return videoMedia ? <video src={videoMedia.url} className={styles.previewVideo} muted /> : null;
+                  })()
                 )}
                 <div className={styles.playIcon}>
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

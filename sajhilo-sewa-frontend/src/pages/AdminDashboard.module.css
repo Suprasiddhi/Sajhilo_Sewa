@@ -810,3 +810,217 @@
   color: var(--primary-green);
   background: var(--secondary-green);
 }
+
+/* Gestures Grid Styles */
+.gesturesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.videoCard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-speed) var(--ease);
+}
+
+.videoCard:hover {
+  transform: translateY(-8px);
+  border-color: var(--primary-green);
+  box-shadow: var(--shadow-lg);
+}
+
+.thumbnail {
+  aspect-ratio: 16 / 9;
+  background: #f1f5f9;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.previewVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cardContent {
+  padding: 20px;
+}
+
+.cardHeader {
+  margin-bottom: 8px;
+}
+
+.gestureTitle {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.cardActions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.videoCard:hover .cardActions {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.actionBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: white;
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.actionBtn:hover {
+  background: var(--primary-green);
+  color: white;
+  border-color: var(--primary-green);
+  transform: scale(1.1);
+}
+
+.deleteBtn:hover {
+  background: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+.category {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: capitalize;
+  margin-bottom: 12px;
+}
+
+.sectionCount {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  background: var(--secondary-green);
+  padding: 4px 10px;
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.loading {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+/* User Management Styles */
+.usersList {
+  margin-top: 24px;
+}
+
+.tableContainer {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.userTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.userTable th {
+  background: #f8fafc;
+  padding: 16px 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.userTable td {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+  vertical-align: middle;
+}
+
+.userTable tr:last-child td {
+  border-bottom: none;
+}
+
+.userInfoCell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.userNameText {
+  font-weight: 600;
+}
+
+.statusBadge {
+  display: inline-flex;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.statusBadge.active {
+  background: #f0fdf4;
+  color: #22c55e;
+}
+
+.statusBadge.inactive {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.deleteUserBtn {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteUserBtn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  transform: scale(1.1);
+}

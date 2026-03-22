@@ -11,8 +11,12 @@ const AdminDashboard = () => {
     total_gestures: 0,
     latest_gestures: []
   });
+  const [allGestures, setAllGestures] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentEditId, setCurrentEditId] = useState(null);
   const [gestureData, setGestureData] = useState({
     name: '',
     category: 'alphabets',
@@ -26,7 +30,28 @@ const AdminDashboard = () => {
 
   React.useEffect(() => {
     fetchStats();
-  }, []);
+    if (activeSection === 'gestures') {
+      fetchAllGestures(selectedCategory);
+    } else if (activeSection === 'users') {
+      fetchAllUsers();
+    }
+  }, [selectedCategory, activeSection]);
+
+  const fetchAllGestures = async (category = 'all') => {
+    try {
+      setLoading(true);
+      const categoryParam = category === 'all' ? 'all' : category.toLowerCase();
+      const res = await fetch(`http://localhost:8000/gestures/?category=${categoryParam}`);
+      if (res.ok) {
+        const data = await res.json();
+        setAllGestures(data);
+      }
+    } catch (err) {
+      console.error("Error fetching gestures:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -45,6 +70,41 @@ const AdminDashboard = () => {
       console.error("Error fetching stats:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAllUsers = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://localhost:8000/admin/users/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAllUsers(data);
+      }
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:8000/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchAllUsers();
+        fetchStats();
+      }
+    } catch (err) {
+      console.error("Error deleting user:", err);
     }
   };
 
@@ -104,6 +164,40 @@ const AdminDashboard = () => {
     }));
   };
 
+  const handleEditClick = (gesture) => {
+    setGestureData({
+      name: gesture.name,
+      category: gesture.category,
+      sections: gesture.sections.map(s => ({
+        ...s,
+        id: s.id, // Keep original ID if possible, but our update logic recreates them anyway
+        media: s.media.map(m => ({ ...m, file: null }))
+      }))
+    });
+    setIsEditing(true);
+    setCurrentEditId(gesture.id);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this gesture?")) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`http://localhost:8000/gestures/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        fetchStats();
+        fetchAllGestures(selectedCategory);
+      }
+    } catch (err) {
+      console.error("Error deleting gesture:", err);
+    }
+  };
+
   const handleSubmit = async () => {
     try {
       // 1. Upload all files first to get URLs
@@ -114,6 +208,9 @@ const AdminDashboard = () => {
             formData.append('file', mediaItem.file);
             const res = await fetch('http://localhost:8000/gestures/upload', {
               method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+              },
               body: formData
             });
             const data = await res.json();
@@ -138,14 +235,23 @@ const AdminDashboard = () => {
         }))
       };
 
-      const res = await fetch('http://localhost:8000/gestures/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const url = isEditing 
+        ? `http://localhost:8000/gestures/${currentEditId}`
+        : 'http://localhost:8000/gestures/';
+      
+      const res = await fetch(url, {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        },
         body: JSON.stringify(finalGesture)
       });
 
       if (res.ok) {
         setIsModalOpen(false);
+        fetchStats();
+        fetchAllGestures(selectedCategory);
         // Refresh gestures or show success
       } else {
         alert("Failed to add gesture");
@@ -166,6 +272,18 @@ const AdminDashboard = () => {
           <rect x="14" y="3" width="7" height="7" />
           <rect x="14" y="14" width="7" height="7" />
           <rect x="3" y="14" width="7" height="7" />
+        </svg>
+      )
+    },
+    { 
+      id: 'users', 
+      label: 'Users',
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       )
     },
@@ -311,13 +429,90 @@ const AdminDashboard = () => {
             </div>
           )}
 
+          {activeSection === 'users' && (
+            <div className={styles.sectionContent}>
+              <header className={styles.header}>
+                <h1 className={styles.title}>User Management</h1>
+              </header>
+
+              <div className={styles.usersList}>
+                {loading ? (
+                  <div className={styles.loading}>Loading users...</div>
+                ) : allUsers.length > 0 ? (
+                  <div className={styles.tableContainer}>
+                    <table className={styles.userTable}>
+                      <thead>
+                        <tr>
+                          <th>User</th>
+                          <th>Email</th>
+                          <th>Joined</th>
+                          <th>Status</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allUsers.map((user) => (
+                          <tr key={user.id}>
+                            <td>
+                              <div className={styles.userInfoCell}>
+                                <div className={styles.userAvatar}>{user.username[0].toUpperCase()}</div>
+                                <span className={styles.userNameText}>{user.username}</span>
+                              </div>
+                            </td>
+                            <td>{user.email}</td>
+                            <td>{new Date(user.created_at).toLocaleDateString()}</td>
+                            <td>
+                              <span className={`${styles.statusBadge} ${user.is_active ? styles.active : styles.inactive}`}>
+                                {user.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td>
+                              <button 
+                                className={styles.deleteUserBtn}
+                                onClick={() => handleDeleteUser(user.id)}
+                                title="Delete User"
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                </svg>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className={styles.emptyState}>
+                    <p>No users found in the system.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {activeSection === 'gestures' && (
             <div className={styles.sectionContent}>
               <header className={styles.header}>
                 <h1 className={styles.title}>Gestures</h1>
                 <button 
                   className={styles.addButton}
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setGestureData({
+                      name: '',
+                      category: 'alphabets',
+                      sections: [{ 
+                        id: Date.now(), 
+                        title: '', 
+                        description: '', 
+                        media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
+                      }]
+                    });
+                    setIsEditing(false);
+                    setCurrentEditId(null);
+                    setIsModalOpen(true);
+                  }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19" />
@@ -339,17 +534,67 @@ const AdminDashboard = () => {
                 ))}
               </div>
               
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                    <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                    <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-                  </svg>
-                </div>
-                <h3>No dynamic gestures added yet</h3>
-                <p>Start by clicking the "Add Gesture" button to expand the system library.</p>
+              <div className={styles.gesturesGrid}>
+                {loading ? (
+                  <div className={styles.loading}>Loading gestures...</div>
+                ) : allGestures.length > 0 ? (
+                  allGestures.map(gesture => (
+                    <div key={gesture.id} className={styles.videoCard}>
+                      <div className={styles.thumbnail}>
+                        {gesture.sections && gesture.sections[0] && gesture.sections[0].media && (
+                          (() => {
+                            const videoMedia = gesture.sections[0].media.find(m => m.media_type === 'video') || gesture.sections[0].media[0];
+                            return videoMedia ? <video src={videoMedia.url} className={styles.previewVideo} muted /> : null;
+                          })()
+                        )}
+                        <div className={styles.cardActions}>
+                          <button 
+                            className={styles.actionBtn} 
+                            onClick={(e) => { e.stopPropagation(); handleEditClick(gesture); }}
+                            title="Edit Gesture"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                          </button>
+                          <button 
+                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
+                            onClick={(e) => { e.stopPropagation(); handleDelete(gesture.id); }}
+                            title="Delete Gesture"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                      <div className={styles.cardContent}>
+                        <div className={styles.cardHeader}>
+                          <h3 className={styles.gestureTitle}>{gesture.name}</h3>
+                        </div>
+                        <p className={styles.category}>{gesture.category}</p>
+                        <div className={styles.sectionCount}>
+                          {gesture.sections?.length || 0} Sections
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyState}>
+                    <div className={styles.emptyIcon}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                        <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                        <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+                        <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+                      </svg>
+                    </div>
+                    <h3>No dynamic gestures added yet</h3>
+                    <p>Start by clicking the "Add Gesture" button to expand the system library.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -379,7 +624,7 @@ const AdminDashboard = () => {
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <header className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Add New Gesture</h2>
+              <h2 className={styles.modalTitle}>{isEditing ? 'Edit Gesture' : 'Add New Gesture'}</h2>
               <button 
                 className={styles.closeButton}
                 onClick={() => setIsModalOpen(false)}
@@ -546,7 +791,7 @@ const AdminDashboard = () => {
                 Cancel
               </button>
               <button className={styles.submitBtn} onClick={handleSubmit}>
-                Add Gesture
+                {isEditing ? 'Save Changes' : 'Add Gesture'}
               </button>
             </footer>
           </div>
