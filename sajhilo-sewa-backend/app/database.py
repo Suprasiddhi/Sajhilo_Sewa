@@ -8,7 +8,7 @@ load_dotenv()
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
-    "postgresql://postgres:postgres@db:5432/sajhilosewadb",
+    "postgresql://neondb_owner:npg_yY6zAXcoNt3e@ep-shy-scene-a8h4xt4s-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require",
 )
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)

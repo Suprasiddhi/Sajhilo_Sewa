@@ -95,6 +95,20 @@ class Gesture(GestureBase):
     class Config:
         from_attributes = True
 
+class GestureDatasetBase(BaseModel):
+    gesture_id: int
+    is_augmented: bool = False
+
+class GestureDatasetCreate(GestureDatasetBase):
+    data: List[float]
+
+class GestureDataset(GestureDatasetBase):
+    id: int
+    data: str 
+
+    class Config:
+        from_attributes = True
+
 class AdminStatsResponse(BaseModel):
     total_users: int
     all_usernames: List[str]

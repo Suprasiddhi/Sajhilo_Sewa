@@ -61,6 +61,13 @@
   opacity: 0.6;
 }
 
+.translationText {
+  color: var(--text-main);
+  font-size: 2.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
 .footer {
   padding-top: 24px;
   border-top: 1px solid var(--border-color);

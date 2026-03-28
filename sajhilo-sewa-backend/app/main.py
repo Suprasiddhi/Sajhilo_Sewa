@@ -1,13 +1,39 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 from app.database import Base, engine, SessionLocal
 from app import models
-from app.routers import auth, gestures, stats, users
+from app.routers import auth, gestures, stats, users, ml
 from app.auth_utils import get_password_hash
+from app.services.websocket_handler import ws_handler
+
+# Create Database Tables
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Sajhilo Sewa API")
+
+# Register Routers
+app.include_router(auth.router)
+app.include_router(gestures.router)
+app.include_router(stats.router)
+app.include_router(users.router)
+app.include_router(ml.router, prefix="/api/ml", tags=["ML"])
+
+@app.websocket("/ws/recognition/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await ws_handler.handle(websocket, client_id)
+origins = [
+    "http://localhost:3000",
+    "http://localhost:3001"
+]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -36,7 +62,6 @@ def startup_event():
                 is_active=True
             )
             db.add(admin_user)
-        
         # Always ensure the password is 'admin' for developer convenience
         admin_user.hashed_password = get_password_hash("admin")
         db.commit()
@@ -45,30 +70,3 @@ def startup_event():
         print(f"Error initializing admin: {e}")
     finally:
         db.close()
-
-# ── Create all tables on startup ──────────────────────────────────────────────
-Base.metadata.create_all(bind=engine)
-
-# ── CORS — allow your React frontend ─────────────────────────────────────────
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# ── Routers ───────────────────────────────────────────────────────────────────
-app.include_router(auth.router)
-app.include_router(gestures.router)
-app.include_router(stats.router)
-app.include_router(users.router)
-
-# ── Serve Uploaded Files ──────────────────────────────────────────────────────
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
-# ── Health check ──────────────────────────────────────────────────────────────
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}

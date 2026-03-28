@@ -98,3 +98,16 @@ Check container status:
 ```bash
 docker compose ps
 ```
+
+## Backend
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level debug
+```
+.\.venv\Scripts\python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+
+
+## Frontend
+```bash
+npm run dev
+```

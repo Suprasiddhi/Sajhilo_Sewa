@@ -1,7 +1,9 @@
 import React from 'react';
 import styles from './NepaliTranslation.module.css';
 
-const NepaliTranslation = () => {
+const NepaliTranslation = ({ text, confidence }) => {
+  const displayConfidence = Math.round((confidence || 0) * 100);
+  
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -16,16 +18,20 @@ const NepaliTranslation = () => {
       </div>
 
       <div className={styles.translationBox}>
-        <p className={styles.placeholderText}>तपाईंको अनुवाद यहाँ देखा पर्नेछ...</p>
+        {text ? (
+          <p className={styles.translationText}>{text}</p>
+        ) : (
+          <p className={styles.placeholderText}>तपाईंको अनुवाद यहाँ देखा पर्नेछ...</p>
+        )}
       </div>
 
       <div className={styles.footer}>
         <div className={styles.confidenceHeader}>
           <span>Confidence Score</span>
-          <span className={styles.percentage}>0%</span>
+          <span className={styles.percentage}>{displayConfidence}%</span>
         </div>
         <div className={styles.progressTrack}>
-          <div className={styles.progressBar} style={{ width: '0%' }}></div>
+          <div className={styles.progressBar} style={{ width: `${displayConfidence}%` }}></div>
         </div>
       </div>
     </div>

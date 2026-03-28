@@ -1,8 +1,10 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './CameraFeed.module.css';
+import gestureWebSocket from '../../services/gestureWebSocket';
+import { translateGesture } from '../../utils/translation';
 
-const CameraFeed = () => {
+const CameraFeed = ({ onRecognition }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
@@ -11,13 +13,30 @@ const CameraFeed = () => {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { width: 1280, height: 720 } 
+        video: true 
       });
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
       setIsActive(true);
+
+      // --- ML Integration ---
+      const clientId = `client_${Math.random().toString(36).substr(2, 9)}`;
+      gestureWebSocket.connect(clientId);
+      
+      gestureWebSocket.onResult = (result) => {
+        if (onRecognition) {
+          onRecognition({
+            english: result.gesture,
+            nepali: translateGesture(result.gesture),
+            confidence: result.confidence
+          });
+        }
+      };
+
+      gestureWebSocket.startCapture({ current: videoRef.current }, 20);
+
     } catch (err) {
       console.error("Error accessing camera:", err);
       alert("Could not access camera. Please ensure you have given permission.");
@@ -30,6 +49,7 @@ const CameraFeed = () => {
       setStream(null);
     }
     setIsActive(false);
+    gestureWebSocket.disconnect();
   };
 
   useEffect(() => {

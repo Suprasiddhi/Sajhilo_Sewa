@@ -1,0 +1,27 @@
+{
+  "gestures": [
+    "bathroom",
+    "bill",
+    "bottle",
+    "clean",
+    "coffee",
+    "cold",
+    "food",
+    "hello",
+    "hot",
+    "no",
+    "order",
+    "please",
+    "tea",
+    "thank you",
+    "wait",
+    "want",
+    "water",
+    "yes"
+  ],
+  "weights": [
+    0.3653566229985444,
+    0.37700145560407566,
+    0.2576419213973799
+  ]
+}

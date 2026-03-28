@@ -1,10 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./HomePage.module.css";
 import CameraFeed from "../components/dashboard/CameraFeed";
 import RecognitionHistory from "../components/dashboard/RecognitionHistory";
 import NepaliTranslation from "../components/dashboard/NepaliTranslation";
+import EnglishTextOutput from "../components/dashboard/EnglishTextOutput";
 
 function HomePage() {
+  const [recognitionResult, setRecognitionResult] = useState({
+    english: "",
+    nepali: "",
+    confidence: 0
+  });
+
+  const handleRecognition = (result) => {
+    setRecognitionResult(result);
+  };
+
   return (
     <div className={styles.homePage}>
       <header className={styles.header}>
@@ -19,7 +30,7 @@ function HomePage() {
 
       <div className={styles.dashboardGrid}>
         <div className={styles.mainColumn}>
-          <CameraFeed />
+          <CameraFeed onRecognition={handleRecognition} />
         </div>
         
         <div className={styles.sideColumn}>
@@ -27,7 +38,13 @@ function HomePage() {
         </div>
 
         <div className={styles.fullWidthRow}>
-          <NepaliTranslation />
+          <EnglishTextOutput text={recognitionResult.english} />
+        </div>
+        <div className={styles.fullWidthRow}>
+          <NepaliTranslation 
+            text={recognitionResult.nepali} 
+            confidence={recognitionResult.confidence} 
+          />
         </div>
 
       </div>
