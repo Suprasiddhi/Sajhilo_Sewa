@@ -45,15 +45,3 @@ class Media(Base):
     url = Column(String)
 
     section = relationship("GestureSection", back_populates="media")
-
-class GestureDataset(Base):
-    __tablename__ = "gesture_dataset"
-
-    id = Column(Integer, primary_key=True, index=True)
-    gesture_id = Column(Integer, ForeignKey("gestures.id"))
-    # Stores the 30-frame sequence as a JSON-encoded list of 1890 floats
-    data = Column(Text) 
-    is_augmented = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    gesture = relationship("Gesture")
