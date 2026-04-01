@@ -111,3 +111,39 @@
     font-size: 1rem;
     line-height: 1;
 }
+
+.outputControls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.outputControls > div {
+  flex-grow: 1;
+}
+
+.clearButton {
+  padding: 12px 24px;
+  background: var(--error-red, #ff4d4f);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s var(--ease);
+  white-space: nowrap;
+}
+
+.clearButton:hover {
+  background: #ff7875;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.3);
+}
+
+.clearButton:active {
+  transform: translateY(0);
+}

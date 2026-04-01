@@ -40,6 +40,7 @@ from app.ml.models.stgcn_model  import STGCNModel, build_adjacency_matrix
 from app.ml.train               import TCNTrainer, BiLSTMTrainer, STGCNTrainer
 from app.ml.ensemble            import EnsembleVoter
 from app.ml.preprocessing       import extract_keypoints, preprocess_for_models
+from app.ml.models.alphabet_model import AlphabetModel
 
 # MediaPipe — legacy solutions API preferred for speed
 try:
@@ -319,3 +320,118 @@ class GestureRecognizer:
 # ── Global singleton ──────────────────────────────────────────────────────────
 # Instantiated once when the module is first imported.
 recognizer = GestureRecognizer()
+class AlphabetRecognizer:
+    def __init__(self):
+        self.device = DEVICE
+        self.labels = self._load_labels()
+        self.num_classes = len(self.labels)
+        from app.ml.models.alphabet_model import AlphabetModel
+        self.model = AlphabetModel(num_classes=self.num_classes).to(self.device)
+        self._load_model()
+        self._stability_counters = {}
+        self._last_raw_prediction = {}
+        self._stability_threshold = 3
+        self._sentences = {}
+        
+        # Use consistent MediaPipe initialization
+        if not _MP_NEW_API:
+            self._hands = _mp_hands.Hands(
+                static_image_mode=False, 
+                max_num_hands=1, 
+                min_detection_confidence=0.5
+            )
+        else:
+            self._hands = None
+
+    def init_client(self, client_id: str):
+        """Initialize per-client state for alphabet recognition."""
+        self._sentences[client_id] = ""
+        self._last_raw_prediction[client_id] = ""
+        self._stability_counters[client_id] = 0
+
+    def remove_client(self, client_id: str):
+        """Clean up per-client state on disconnect."""
+        self._sentences.pop(client_id, None)
+        self._last_raw_prediction.pop(client_id, None)
+        self._stability_counters.pop(client_id, None)
+
+    def _load_labels(self):
+        import os, json
+        path = os.path.join(WEIGHTS_DIR, "alphabet_labels.json")
+        if os.path.exists(path):
+            with open(path) as f:
+                return json.load(f)
+        return list("ABCDEFGHIJKLMNOPQRSTUVWXYZ") + ["del", "nothing", "space"]
+
+    def _load_model(self):
+        import os, torch
+        path = os.path.join(WEIGHTS_DIR, "alphabet_best.pth")
+        if os.path.exists(path): 
+            self.model.load_state_dict(torch.load(path, map_location=self.device))
+            print(f"✅ Alphabet model weights loaded from {path}")
+        else:
+            print(f"⚠️  Alphabet weights not found at {path}. Have you run the trainer?")
+        self.model.eval()
+
+    def process_frame(self, client_id, frame_input):
+        import numpy as np, cv2, base64, io, torch
+        from PIL import Image
+        from app.ml.preprocessing import extract_keypoints
+        
+        # Ensure client is initialized
+        if client_id not in self._sentences:
+            self.init_client(client_id)
+        
+        # ── Decode frame ──────────────────────────────────────────
+        if isinstance(frame_input, str):
+            if ',' in frame_input: frame_input = frame_input.split(',')[1]
+            img_bytes = base64.b64decode(frame_input)
+            pil_img = Image.open(io.BytesIO(img_bytes)).convert('RGB')
+            frame = np.array(pil_img)
+        else:
+            frame = frame_input
+
+        # ── Extract landmarks ─────────────────────────────────────
+        if len(frame.shape) == 3 and frame.shape[2] == 3:
+            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        else:
+            rgb = frame
+
+        if _MP_NEW_API:
+            from app.ml.preprocessing import run_mediapipe
+            results = run_mediapipe(rgb, None)
+        else:
+            results = self._hands.process(rgb)
+        
+        landmarks = extract_keypoints(results) 
+        if np.all(landmarks == 0): return {'success': False, 'gesture': 'No hand', 'sentence': self._sentences[client_id]}
+        with torch.no_grad():
+            out = self.model(torch.FloatTensor(landmarks.flatten()).unsqueeze(0).to(self.device))
+            probs = torch.softmax(out, dim=1).cpu().numpy()[0]
+            idx = np.argmax(probs)
+            label, conf = self.labels[idx], float(probs[idx])
+        if conf > 0.45:
+            # DEBUG: print(f"Alphabet Detect: {label} ({conf:.2f}) | Stability: {self._stability_counters.get(client_id, 0)}/{self._stability_threshold}")
+            if label == self._last_raw_prediction.get(client_id):
+                self._stability_counters[client_id] += 1
+            else:
+                self._stability_counters[client_id] = 1
+                self._last_raw_prediction[client_id] = label
+
+            if self._stability_counters[client_id] == self._stability_threshold:
+                if label == 'space':
+                    self._sentences[client_id] += ' '
+                elif label == 'del':
+                    self._sentences[client_id] = self._sentences[client_id][:-1]
+                elif label != 'nothing':
+                    self._sentences[client_id] += label
+                print(f"✨ Typed Letter: {label} | Current Word: {self._sentences[client_id]}")
+        else:
+             self._stability_counters[client_id] = 0
+        
+        return {'success': True, 'gesture': label, 'confidence': conf, 'sentence': self._sentences[client_id]}
+
+    def clear_sentence(self, client_id): self._sentences[client_id] = ''
+
+alphabet_recognizer = AlphabetRecognizer()
+

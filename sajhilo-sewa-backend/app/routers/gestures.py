@@ -7,6 +7,7 @@ import shutil
 from app.database import get_db
 from app import models, schemas
 from app.auth_utils import get_current_active_user
+from app.ml.config import VIDEO_ROOT, DATA_DIR
 
 router = APIRouter(prefix="/gestures", tags=["gestures"])
 
@@ -118,6 +119,40 @@ def delete_gesture(
     if not db_gesture:
         raise HTTPException(status_code=404, detail="Gesture not found")
     
+    gesture_name = db_gesture.name
+    
+    # 1. Gather all file paths from Media before deleting the DB record
+    media_files = []
+    for section in db_gesture.sections:
+        for media in section.media:
+            if media.url and ("/uploads/" in media.url or "uploads/" in media.url):
+                # Extract the filename from the URL
+                filename = media.url.split('/')[-1]
+                media_files.append(os.path.join("uploads", filename))
+    
+    # 2. Delete Physical Files
+    for file_path in media_files:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"🗑️ Deleted upload file: {file_path}")
+        except Exception as e:
+            print(f"⚠️ Error deleting file {file_path}: {e}")
+            
+    # 3. Delete AI TRAINING folders
+    paths_to_remove = [
+        os.path.join(VIDEO_ROOT, gesture_name),
+        os.path.join(DATA_DIR, gesture_name)
+    ]
+    for p in paths_to_remove:
+        try:
+            if os.path.exists(p):
+                shutil.rmtree(p)
+                print(f"🔥 Removed training folder: {p}")
+        except Exception as e:
+            print(f"⚠️ Error removing training folder {p}: {e}")
+
+    # 4. Delete from Database
     db.delete(db_gesture)
     db.commit()
     return None

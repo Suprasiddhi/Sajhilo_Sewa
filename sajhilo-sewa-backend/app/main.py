@@ -20,9 +20,17 @@ app.include_router(stats.router)
 app.include_router(users.router)
 app.include_router(ml.router, prefix="/api/ml", tags=["ML"])
 
+# Serve Static Files
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 @app.websocket("/ws/recognition/{client_id}")
 async def websocket_endpoint(websocket: WebSocket, client_id: str):
     await ws_handler.handle(websocket, client_id)
+
+@app.websocket("/ws/alphabet/{client_id}")
+async def alphabet_websocket_endpoint(websocket: WebSocket, client_id: str):
+    await ws_handler.handle_alphabet(websocket, client_id)
 origins = [
     "http://localhost:3000",
     "http://localhost:3001"

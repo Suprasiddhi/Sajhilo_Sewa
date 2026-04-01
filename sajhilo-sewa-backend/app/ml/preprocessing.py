@@ -79,6 +79,15 @@ def extract_keypoints(results) -> np.ndarray:
 
 def run_mediapipe(image_rgb: np.ndarray, hands_detector):
     """Helper: dispatch to old or new MediaPipe API."""
+    # Resize to square to suppress MediaPipe warnings about non-square ROIs.
+    # Normalized landmarks (0-1) are mathematically identical whether the image
+    # is squashed to a square or not, but MediaPipe's internal calculator
+    # expects a square ROI or explicit dimensions to avoid warnings.
+    h, w = image_rgb.shape[:2]
+    if h != w:
+        size = max(h, w)
+        image_rgb = cv2.resize(image_rgb, (size, size))
+
     if _MP_NEW_API:
         mp_image = _MP_Image(
             image_format=_MP_ImageFormat.SRGB, data=image_rgb

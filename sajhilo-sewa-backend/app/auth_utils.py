@@ -11,17 +11,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 #  CONFIG  —  loaded from your .env file
-# ─────────────────────────────────────────────────────────────────────────────
 SECRET_KEY                  = os.getenv("SECRET_KEY", "changeme")
 ALGORITHM                   = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30))
 REFRESH_TOKEN_EXPIRE_DAYS   = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", 7))
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 #  PASSWORD HASHING
-# ─────────────────────────────────────────────────────────────────────────────
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
@@ -37,9 +35,8 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+
 #  JWT — TOKEN CREATION
-# ─────────────────────────────────────────────────────────────────────────────
 def _create_token(data: dict, expires_delta: timedelta) -> str:
     """Internal helper: add expiry claim and sign the token."""
     payload = data.copy()
@@ -78,17 +75,13 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 #  OAUTH2 SCHEME
 #  Tells FastAPI to look for the token in the Authorization: Bearer header.
 #  Also powers the Authorize button in /docs.
-# ─────────────────────────────────────────────────────────────────────────────
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 #  DEPENDENCIES  —  inject into any protected route via Depends()
-# ─────────────────────────────────────────────────────────────────────────────
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db), 

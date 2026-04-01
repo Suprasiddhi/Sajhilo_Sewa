@@ -2,9 +2,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './CameraFeed.module.css';
 import gestureWebSocket from '../../services/gestureWebSocket';
-import { translateGesture } from '../../utils/translation';
 
-const CameraFeed = ({ onRecognition }) => {
+const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
   const navigate = useNavigate();
   const videoRef = useRef(null);
   const [isActive, setIsActive] = useState(false);
@@ -13,7 +12,7 @@ const CameraFeed = ({ onRecognition }) => {
   const startCamera = async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: true 
+          video: true 
       });
       setStream(mediaStream);
       if (videoRef.current) {
@@ -23,13 +22,13 @@ const CameraFeed = ({ onRecognition }) => {
 
       // --- ML Integration ---
       const clientId = `client_${Math.random().toString(36).substr(2, 9)}`;
-      gestureWebSocket.connect(clientId);
+      gestureWebSocket.connect(clientId, mode);
       
       gestureWebSocket.onResult = (result) => {
         if (onRecognition) {
           onRecognition({
             english: result.gesture,
-            nepali: translateGesture(result.gesture),
+            nepali: result.nepali, // Using backend-provided translation
             confidence: result.confidence
           });
         }

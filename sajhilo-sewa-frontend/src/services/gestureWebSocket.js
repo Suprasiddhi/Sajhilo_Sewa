@@ -14,8 +14,8 @@ class GestureWebSocket {
     }
 
     // ── Connect ────────────────────────────────────────────────────────────────
-    connect(clientId) {
-        const url = `ws://localhost:8000/ws/recognition/${clientId}`;
+    connect(clientId, endpoint = 'recognition') {
+        const url = `ws://localhost:8000/ws/${endpoint}/${clientId}`;
         this.clientId = clientId;
         this.ws = new WebSocket(url);
 
@@ -101,15 +101,20 @@ class GestureWebSocket {
                 break;
 
             case "recognition_result":
-                if (msg.success && this.onResult) {
+                if (this.onResult) {
                     this.onResult({
+                        success: msg.success,
                         gesture: msg.data.gesture,
+                        nepali: msg.data.nepali || "",
                         confidence: msg.data.confidence,
-                        allProbs: msg.data.all_probs,
-                        modelVotes: msg.data.model_votes,
-                        bufferProgress: msg.data.buffer_progress,
+                        allProbs: msg.data.all_probs || [],
+                        modelVotes: msg.data.model_votes || [],
+                        bufferProgress: msg.data.buffer_progress || "N/A",
+                        sentence: msg.sentence,
+                        nepaliSentence: msg.nepali_sentence || "",
                     });
-                } else if (!msg.success && this.onStatus) {
+                } 
+                if (!msg.success && this.onStatus) {
                     this.onStatus(msg.message || "…");
                 }
                 break;

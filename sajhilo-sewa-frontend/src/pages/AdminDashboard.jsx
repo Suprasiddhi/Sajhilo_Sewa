@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './AdminDashboard.module.css';
 
+// Sub-components
+import AdminDashboardUsers from './AdminDashboardUsers';
+import AdminDashboardGesture from './AdminDashboardGesture';
+import AdminDashboardHistory from './AdminDashboardHistory';
+
 const AdminDashboard = () => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stats, setStats] = useState({
@@ -108,6 +114,42 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    navigate('/login');
+  };
+
+  const handleProcessVideos = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://localhost:8000/api/ml/process-videos', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.message || "Video processing started in background.");
+    } catch (err) {
+      alert("Failed to start processing: " + err.message);
+    }
+  };
+
+  const handleRetrain = async () => {
+    if (!window.confirm("Full training takes 10-30 min. Continue?")) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch('http://localhost:8000/api/ml/train', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      alert(data.message || "Training started in background.");
+    } catch (err) {
+      alert("Failed to start training: " + err.message);
+    }
+  };
+
   const handleAddMoreSection = () => {
     setGestureData(prev => ({
       ...prev,
@@ -170,7 +212,7 @@ const AdminDashboard = () => {
       category: gesture.category,
       sections: gesture.sections.map(s => ({
         ...s,
-        id: s.id, // Keep original ID if possible, but our update logic recreates them anyway
+        id: s.id,
         media: s.media.map(m => ({ ...m, file: null }))
       }))
     });
@@ -200,7 +242,6 @@ const AdminDashboard = () => {
 
   const handleSubmit = async () => {
     try {
-      // 1. Upload all files first to get URLs
       const updatedSections = await Promise.all(gestureData.sections.map(async (section) => {
         const updatedMedia = await Promise.all(section.media.map(async (mediaItem) => {
           if (mediaItem.file) {
@@ -221,7 +262,6 @@ const AdminDashboard = () => {
         return { ...section, media: updatedMedia };
       }));
 
-      // 2. Submit the full gesture data
       const finalGesture = {
         name: gestureData.name,
         category: gestureData.category,
@@ -248,11 +288,15 @@ const AdminDashboard = () => {
         body: JSON.stringify(finalGesture)
       });
 
+      if (res.status === 401) {
+        alert("Session expired or unauthorized. Please log out and back in.");
+        return;
+      }
+
       if (res.ok) {
         setIsModalOpen(false);
         fetchStats();
         fetchAllGestures(selectedCategory);
-        // Refresh gestures or show success
       } else {
         alert("Failed to add gesture");
       }
@@ -262,7 +306,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const sections = [
+  const navigationItems = [
     { 
       id: 'overview', 
       label: 'Overview',
@@ -328,18 +372,28 @@ const AdminDashboard = () => {
           </div>
           <span className={styles.logoText}>Sajhilo Sewa Admin</span>
         </div>
+        <div className={styles.topBarRight}>
+          <button onClick={handleLogout} className={styles.logoutBtn}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
       </header>
 
       <div className={styles.container}>
         <aside className={styles.subSidebar}>
-          {sections.map((section) => (
+          {navigationItems.map((item) => (
             <button
-              key={section.id}
-              className={`${styles.navButton} ${activeSection === section.id ? styles.active : ''}`}
-              onClick={() => setActiveSection(section.id)}
+              key={item.id}
+              className={`${styles.navButton} ${activeSection === item.id ? styles.active : ''}`}
+              onClick={() => setActiveSection(item.id)}
             >
-              {section.icon}
-              <span>{section.label}</span>
+              {item.icon}
+              <span>{item.label}</span>
             </button>
           ))}
         </aside>
@@ -380,6 +434,34 @@ const AdminDashboard = () => {
                     <span className={styles.statLabel}>Total Gestures</span>
                     <h2 className={styles.statValue}>{stats.total_gestures}</h2>
                   </div>
+                </div>
+              </div>
+
+              <div className={styles.systemGrid}>
+                <div className={styles.systemCard}>
+                  <div className={styles.cardHeaderSmall}>
+                    <h3 className={styles.cardTitle}>ML System Management</h3>
+                    <div className={styles.systemBadge}>Ready</div>
+                  </div>
+                  <div className={styles.systemButtons}>
+                    <button onClick={handleProcessVideos} className={styles.processBtn}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      <span>Process Videos</span>
+                    </button>
+                    <button onClick={handleRetrain} className={styles.retrainBtn}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 12c0-4.4 3.6-8 8-8 3.3 0 6.2 2 7.4 5M22 12c0 4.4-3.6 8-8 8-3.3 0-6.2-2-7.4-5" />
+                      </svg>
+                      <span>Retrain Model</span>
+                    </button>
+                  </div>
+                  <p className={styles.systemNote}>
+                    * Run "Process Videos" first if you have uploaded new gestures.
+                  </p>
                 </div>
               </div>
 
@@ -430,193 +512,39 @@ const AdminDashboard = () => {
           )}
 
           {activeSection === 'users' && (
-            <div className={styles.sectionContent}>
-              <header className={styles.header}>
-                <h1 className={styles.title}>User Management</h1>
-              </header>
-
-              <div className={styles.usersList}>
-                {loading ? (
-                  <div className={styles.loading}>Loading users...</div>
-                ) : allUsers.length > 0 ? (
-                  <div className={styles.tableContainer}>
-                    <table className={styles.userTable}>
-                      <thead>
-                        <tr>
-                          <th>User</th>
-                          <th>Email</th>
-                          <th>Joined</th>
-                          <th>Status</th>
-                          <th>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {allUsers.map((user) => (
-                          <tr key={user.id}>
-                            <td>
-                              <div className={styles.userInfoCell}>
-                                <div className={styles.userAvatar}>{user.username[0].toUpperCase()}</div>
-                                <span className={styles.userNameText}>{user.username}</span>
-                              </div>
-                            </td>
-                            <td>{user.email}</td>
-                            <td>{new Date(user.created_at).toLocaleDateString()}</td>
-                            <td>
-                              <span className={`${styles.statusBadge} ${user.is_active ? styles.active : styles.inactive}`}>
-                                {user.is_active ? 'Active' : 'Inactive'}
-                              </span>
-                            </td>
-                            <td>
-                              <button 
-                                className={styles.deleteUserBtn}
-                                onClick={() => handleDeleteUser(user.id)}
-                                title="Delete User"
-                              >
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="3 6 5 6 21 6" />
-                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                </svg>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <div className={styles.emptyState}>
-                    <p>No users found in the system.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <AdminDashboardUsers 
+              allUsers={allUsers} 
+              loading={loading} 
+              handleDeleteUser={handleDeleteUser} 
+            />
           )}
 
           {activeSection === 'gestures' && (
-            <div className={styles.sectionContent}>
-              <header className={styles.header}>
-                <h1 className={styles.title}>Gestures</h1>
-                <button 
-                  className={styles.addButton}
-                  onClick={() => {
-                    setGestureData({
-                      name: '',
-                      category: 'alphabets',
-                      sections: [{ 
-                        id: Date.now(), 
-                        title: '', 
-                        description: '', 
-                        media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
-                      }]
-                    });
-                    setIsEditing(false);
-                    setCurrentEditId(null);
-                    setIsModalOpen(true);
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  <span>Add Gesture</span>
-                </button>
-              </header>
-
-              <div className={styles.filterBar}>
-                {['all', 'alphabets', 'numbers', 'common'].map((cat) => (
-                  <button
-                    key={cat}
-                    className={`${styles.filterButton} ${selectedCategory === cat ? styles.activeFilter : ''}`}
-                    onClick={() => setSelectedCategory(cat)}
-                  >
-                    {cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ')}
-                  </button>
-                ))}
-              </div>
-              
-              <div className={styles.gesturesGrid}>
-                {loading ? (
-                  <div className={styles.loading}>Loading gestures...</div>
-                ) : allGestures.length > 0 ? (
-                  allGestures.map(gesture => (
-                    <div key={gesture.id} className={styles.videoCard}>
-                      <div className={styles.thumbnail}>
-                        {gesture.sections && gesture.sections[0] && gesture.sections[0].media && (
-                          (() => {
-                            const videoMedia = gesture.sections[0].media.find(m => m.media_type === 'video') || gesture.sections[0].media[0];
-                            return videoMedia ? <video src={videoMedia.url} className={styles.previewVideo} muted /> : null;
-                          })()
-                        )}
-                        <div className={styles.cardActions}>
-                          <button 
-                            className={styles.actionBtn} 
-                            onClick={(e) => { e.stopPropagation(); handleEditClick(gesture); }}
-                            title="Edit Gesture"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                          </button>
-                          <button 
-                            className={`${styles.actionBtn} ${styles.deleteBtn}`} 
-                            onClick={(e) => { e.stopPropagation(); handleDelete(gesture.id); }}
-                            title="Delete Gesture"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6" />
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      <div className={styles.cardContent}>
-                        <div className={styles.cardHeader}>
-                          <h3 className={styles.gestureTitle}>{gesture.name}</h3>
-                        </div>
-                        <p className={styles.category}>{gesture.category}</p>
-                        <div className={styles.sectionCount}>
-                          {gesture.sections?.length || 0} Sections
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className={styles.emptyState}>
-                    <div className={styles.emptyIcon}>
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                        <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                        <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-                        <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-                      </svg>
-                    </div>
-                    <h3>No dynamic gestures added yet</h3>
-                    <p>Start by clicking the "Add Gesture" button to expand the system library.</p>
-                  </div>
-                )}
-              </div>
-            </div>
+            <AdminDashboardGesture 
+              allGestures={allGestures}
+              loading={loading}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              handleEditClick={handleEditClick}
+              handleDelete={handleDelete}
+              setIsModalOpen={setIsModalOpen}
+              setGestureData={setGestureData}
+              setIsEditing={setIsEditing}
+              setCurrentEditId={setCurrentEditId}
+              isModalOpen={isModalOpen}
+              isEditing={isEditing}
+              gestureData={gestureData}
+              handleRemoveSection={handleRemoveSection}
+              handleSectionChange={handleSectionChange}
+              handleRemoveMedia={handleRemoveMedia}
+              handleMediaChange={handleMediaChange}
+              handleAddMedia={handleAddMedia}
+              handleAddMoreSection={handleAddMoreSection}
+              handleSubmit={handleSubmit}
+            />
           )}
 
-          {activeSection === 'history' && (
-            <div className={styles.sectionContent}>
-              <header className={styles.header}>
-                <h1 className={styles.title}>History</h1>
-              </header>
-              
-              <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 8v4l3 3" />
-                    <circle cx="12" cy="12" r="9" />
-                  </svg>
-                </div>
-                <h3>No history logs found</h3>
-                <p>System activity and recognition history will appear here.</p>
-              </div>
-            </div>
-          )}
+          {activeSection === 'history' && <AdminDashboardHistory />}
         </main>
       </div>
 

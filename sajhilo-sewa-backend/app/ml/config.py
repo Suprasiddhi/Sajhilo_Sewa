@@ -14,7 +14,7 @@ import torch
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Where your training videos live.
-VIDEO_ROOT = os.path.join(BASE_DIR, "videos")
+VIDEO_ROOT = os.path.join(BASE_DIR, "videos", "gestures")
 
 # Where extracted .npy keypoint sequences will be saved
 DATA_DIR = os.path.join(BASE_DIR, "app", "data")
@@ -26,7 +26,7 @@ WEIGHTS_DIR = os.path.join(BASE_DIR, "app", "ml", "saved_models")
 # Must match the subfolder names inside VIDEO_ROOT exactly
 GESTURES = [
     "bathroom", "bill", "bottle", "clean", "coffee", "cold", "food",
-    "hello", "hot", "no", "order", "please", "tea", "thank you",
+    "hello", "hot", "i", "no", "order", "please", "tea", "thank you",
     "wait", "want", "water", "yes"
 ]
 

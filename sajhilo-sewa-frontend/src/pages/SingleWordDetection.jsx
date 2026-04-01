@@ -4,6 +4,7 @@ import CameraFeed from "../components/dashboard/CameraFeed";
 import RecognitionHistory from "../components/dashboard/RecognitionHistory";
 import NepaliTranslation from "../components/dashboard/NepaliTranslation";
 import EnglishTextOutput from "../components/dashboard/EnglishTextOutput";
+import gestureWebSocket from "../services/gestureWebSocket";
 
 function SingleWordDetection() {
   const [recognitionResult, setRecognitionResult] = useState({
@@ -13,7 +14,11 @@ function SingleWordDetection() {
   });
 
   const handleRecognition = (result) => {
-    setRecognitionResult(result);
+    setRecognitionResult({
+      english: result.sentence, // The whole word built so far
+      nepali: result.gesture,    // The current letter detected
+      confidence: result.confidence
+    });
   };
 
   return (
@@ -29,7 +34,7 @@ function SingleWordDetection() {
 
       <div className={styles.dashboardGrid}>
         <div className={styles.mainColumn}>
-          <CameraFeed onRecognition={handleRecognition} />
+          <CameraFeed onRecognition={handleRecognition} mode="alphabet" />
         </div>
         
         <div className={styles.sideColumn}>
@@ -37,11 +42,24 @@ function SingleWordDetection() {
         </div>
 
         <div className={styles.fullWidthRow}>
-          <EnglishTextOutput text={recognitionResult.english} />
+          <div className={styles.outputControls}>
+            <EnglishTextOutput text={recognitionResult.english || "..."} />
+            <button 
+              className={styles.clearButton} 
+              onClick={() => {
+                if (gestureWebSocket.ws?.readyState === WebSocket.OPEN) {
+                  gestureWebSocket.ws.send(JSON.stringify({ type: "clear_sentence" }));
+                }
+                setRecognitionResult({ english: "", nepali: "", confidence: 0 });
+              }}
+            >
+              Clear Text
+            </button>
+          </div>
         </div>
         <div className={styles.fullWidthRow}>
           <NepaliTranslation 
-            text={recognitionResult.nepali} 
+            text={recognitionResult.nepali || "None"} 
             confidence={recognitionResult.confidence} 
           />
         </div>

@@ -18,8 +18,8 @@ Message types the server sends back:
 from fastapi import WebSocket, WebSocketDisconnect
 
 from app.services.websocket_manager import manager
-from app.ml.inference import recognizer
-
+from app.ml.inference import recognizer, alphabet_recognizer
+from app.services.translator import translator_service
 
 class WebSocketHandler:
 
@@ -56,7 +56,7 @@ class WebSocketHandler:
 
                 elif msg_type == "clear_sentence":
                     recognizer.clear_sentence(client_id)
-                    await manager.send(client_id, {"type": "sentence_cleared", "sentence": ""})
+                    await manager.send(client_id, {"type": "sentence_cleared", "sentence": "", "nepali_sentence": ""})
 
                 elif msg_type == "ping":
                     await manager.send(client_id, {"type": "pong"})
@@ -89,13 +89,23 @@ class WebSocketHandler:
             return
 
         result = recognizer.process_frame(client_id, frame_data)
+        
+        # Add translation to the results
+        gesture = result.get("gesture", "")
+        sentence = result.get("sentence", "")
+        
+        # Only translate if there's actually a gesture
+        nepali_gesture = translator_service.translate(gesture) if gesture else ""
+        nepali_sentence = translator_service.translate(sentence) if sentence else ""
 
         await manager.send(client_id, {
             "type":    "recognition_result",
             "success": result.get("success", False),
-            "sentence": result.get("sentence", ""),
+            "sentence": sentence,
+            "nepali_sentence": nepali_sentence,
             "data":    {
-                "gesture":         result.get("gesture"),
+                "gesture":         gesture,
+                "nepali":          nepali_gesture,
                 "confidence":      result.get("confidence"),
                 "all_probs":       result.get("all_probs"),
                 "model_votes":     result.get("model_votes"),
@@ -104,6 +114,33 @@ class WebSocketHandler:
             "message":         result.get("message", ""),
             "buffer_progress": result.get("buffer_progress", "0/30"),
         })
+
+    async def handle_alphabet(self, websocket: WebSocket, client_id: str):
+        """WebSocket loop for single-alphabet recognition."""
+        await manager.connect(websocket, client_id)
+        alphabet_recognizer.init_client(client_id)
+        await manager.send(client_id, {"type": "connected", "client_id": client_id, "mode": "alphabet"})
+        try:
+            while True:
+                data = await websocket.receive_json()
+                if data.get("type") == "video_frame":
+                    res = alphabet_recognizer.process_frame(client_id, data.get("data"))
+                    await manager.send(client_id, {
+                        "type": "recognition_result",
+                        "success": res.get("success"),
+                        "sentence": res.get("sentence"),
+                        "data": {
+                            "gesture": res.get("gesture"),
+                            "confidence": res.get("confidence")
+                        }
+                    })
+                elif data.get("type") == "clear_sentence":
+                    alphabet_recognizer.clear_sentence(client_id)
+                    await manager.send(client_id, {"type": "sentence_cleared"})
+        except WebSocketDisconnect: pass
+        finally:
+            manager.disconnect(client_id)
+            alphabet_recognizer.remove_client(client_id)
 
 
 # Shared singleton

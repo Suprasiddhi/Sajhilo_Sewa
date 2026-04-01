@@ -24,6 +24,7 @@ class Gesture(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     sections = relationship("GestureSection", back_populates="gesture", cascade="all, delete-orphan")
+    training_data = relationship("TrainingData", back_populates="gesture", cascade="all, delete-orphan")
 
 class GestureSection(Base):
     __tablename__ = "gesture_sections"
@@ -45,3 +46,14 @@ class Media(Base):
     url = Column(String)
 
     section = relationship("GestureSection", back_populates="media")
+
+class TrainingData(Base):
+    __tablename__ = "training_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+    gesture_id = Column(Integer, ForeignKey("gestures.id", ondelete="CASCADE"))
+    sequence_data = Column(Text)  # Stores serialized JSON of 30x21x3 keypoints
+    is_augmented = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    gesture = relationship("Gesture", back_populates="training_data")
