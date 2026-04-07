@@ -4,23 +4,30 @@ import CameraFeed from "../components/dashboard/CameraFeed";
 import RecognitionHistory from "../components/dashboard/RecognitionHistory";
 import NepaliTranslation from "../components/dashboard/NepaliTranslation";
 import EnglishTextOutput from "../components/dashboard/EnglishTextOutput";
+import gestureWebSocket from "../services/gestureWebSocket";
 
 function HomePage() {
   const [recognitionResult, setRecognitionResult] = useState({
-    english: "",
+    sentence: "",
+    nepaliSentence: "",
     nepali: "",
     confidence: 0
   });
 
   const handleRecognition = (result) => {
-    setRecognitionResult(result);
+    setRecognitionResult({
+      sentence: result.sentence,
+      nepaliSentence: result.nepaliSentence,
+      nepali: result.nepali,
+      confidence: result.confidence
+    });
   };
 
   return (
     <div className={styles.homePage}>
       <header className={styles.header}>
         <div className={styles.welcomeCard}>
-          <h1 className={styles.title}>Welcome to Sajhilo Sewa</h1>
+          <h1 className={styles.title}>Word & Sentence Detection</h1>
           <p className={styles.subtitle}>
             Start your sign language recognition session. Your gestures will
             be translated in real-time.
@@ -38,11 +45,22 @@ function HomePage() {
         </div>
 
         <div className={styles.fullWidthRow}>
-          <EnglishTextOutput text={recognitionResult.english} />
+          <div className={styles.outputControls}>
+            <EnglishTextOutput text={recognitionResult.sentence || "..."} />
+            <button 
+              className={styles.clearButton} 
+              onClick={() => {
+                gestureWebSocket.clearSentence();
+                setRecognitionResult({ sentence: "", nepali: "", confidence: 0 });
+              }}
+            >
+              Clear Text
+            </button>
+          </div>
         </div>
         <div className={styles.fullWidthRow}>
           <NepaliTranslation 
-            text={recognitionResult.nepali} 
+            text={recognitionResult.nepaliSentence || recognitionResult.nepali || "None"} 
             confidence={recognitionResult.confidence} 
           />
         </div>

@@ -52,9 +52,19 @@ def get_gestures(
     category: Optional[str] = "all", 
     db: Session = Depends(get_db)
 ):
+    from sqlalchemy.orm import joinedload
     query = db.query(models.Gesture)
+    
+    # Eager load sections and media to avoid N+1 problem
+    query = query.options(
+        joinedload(models.Gesture.sections).joinedload(models.GestureSection.media)
+    )
+    
     if category and category != "all":
-        query = query.filter(models.Gesture.category == category)
+        if category == "common":
+            query = query.filter(models.Gesture.category.in_(["common", "words"]))
+        else:
+            query = query.filter(models.Gesture.category == category)
     
     return query.all()
 

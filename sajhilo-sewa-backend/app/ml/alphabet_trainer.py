@@ -11,7 +11,7 @@ import json
 
 from app.ml.models.alphabet_model import AlphabetModel
 from app.ml.config import WEIGHTS_DIR, DEVICE
-from app.ml.preprocessing import run_mediapipe, extract_keypoints
+from app.ml.preprocessing import run_mediapipe, extract_keypoints, normalize_keypoints
 
 # Local hands detector instance for static images
 try:
@@ -24,10 +24,18 @@ except AttributeError:
     _hands = None 
 
 def extract_landmarks(image):
-    """Extract (21, 3) landmarks from an image using logic from preprocessing.py."""
+    """
+    Extract (21, 3) landmarks from an image using logic from preprocessing.py.
+    Applies normalization to ensure position/scale invariance.
+    """
     rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     results = run_mediapipe(rgb, _hands)
-    return extract_keypoints(results)
+    landmarks = extract_keypoints(results)
+    
+    if np.all(landmarks == 0):
+        return None
+        
+    return normalize_keypoints(landmarks)
 
 def prepare_alphabet_dataset(data_dir: str):
     """
@@ -53,8 +61,8 @@ def prepare_alphabet_dataset(data_dir: str):
             if img is None: continue
             
             landmarks = extract_landmarks(img)
-            # Only add if hand was actually detected
-            if not np.all(landmarks == 0):
+            # Only add if hand was actually detected (not None)
+            if landmarks is not None:
                 # Flatten the (21,3) landmarks to (63,)
                 X.append(landmarks.flatten())
                 y.append(label_to_idx[label])

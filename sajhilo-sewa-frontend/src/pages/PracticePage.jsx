@@ -8,8 +8,8 @@ const PracticePage = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  const categories = ['All', 'Alphabets', 'Numbers', 'Words', 'Common'];
-
+  const categories = ['All', 'Alphabets', 'Numbers', 'Common Words'];
+  
   useEffect(() => {
     fetchGestures();
   }, [selectedCategory]);
@@ -17,7 +17,8 @@ const PracticePage = () => {
   const fetchGestures = async () => {
     setLoading(true);
     try {
-      const categoryParam = selectedCategory === 'All' ? 'all' : selectedCategory.toLowerCase();
+      let categoryParam = selectedCategory === 'All' ? 'all' : selectedCategory.toLowerCase();
+      if (categoryParam === 'common words') categoryParam = 'common';
       const response = await fetch(`http://localhost:8000/gestures/?category=${categoryParam}`);
       if (response.ok) {
         const data = await response.json();
@@ -67,7 +68,17 @@ const PracticePage = () => {
                 {gesture.sections && gesture.sections[0] && gesture.sections[0].media && (
                   (() => {
                     const videoMedia = gesture.sections[0].media.find(m => m.media_type === 'video') || gesture.sections[0].media[0];
-                    return videoMedia ? <video src={videoMedia.url} className={styles.previewVideo} muted /> : null;
+                    return videoMedia ? (
+                      <div className={styles.videoPreviewContainer}>
+                        <video 
+                          src={videoMedia.url} 
+                          className={styles.previewVideo} 
+                          muted 
+                          preload="metadata"
+                          playsInline
+                        />
+                      </div>
+                    ) : null;
                   })()
                 )}
                 <div className={styles.playIcon}>

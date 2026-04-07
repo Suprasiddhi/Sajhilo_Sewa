@@ -125,12 +125,22 @@ class WebSocketHandler:
                 data = await websocket.receive_json()
                 if data.get("type") == "video_frame":
                     res = alphabet_recognizer.process_frame(client_id, data.get("data"))
+                    
+                    gesture = res.get("gesture", "")
+                    sentence = res.get("sentence", "")
+                    
+                    # Translate
+                    nepali_gesture = translator_service.translate(gesture) if gesture else ""
+                    nepali_sentence = translator_service.translate(sentence) if sentence else ""
+                    
                     await manager.send(client_id, {
                         "type": "recognition_result",
                         "success": res.get("success"),
-                        "sentence": res.get("sentence"),
+                        "sentence": sentence,
+                        "nepali_sentence": nepali_sentence,
                         "data": {
-                            "gesture": res.get("gesture"),
+                            "gesture": gesture,
+                            "nepali": nepali_gesture,
                             "confidence": res.get("confidence")
                         }
                     })

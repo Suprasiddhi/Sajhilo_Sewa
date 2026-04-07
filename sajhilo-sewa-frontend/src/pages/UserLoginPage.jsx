@@ -41,8 +41,9 @@ const UserLoginPage = () => {
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
       
-      // Redirect to home
-      navigate('/');
+      // Redirect back to original link or to home
+      const from = location.state?.from?.pathname || '/';
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message);
     } finally {

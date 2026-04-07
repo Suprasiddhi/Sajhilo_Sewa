@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { logout } from '../../utils/auth';
 import styles from "./Header.module.css";
 
 function Header() {
@@ -18,10 +19,7 @@ function Header() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    setUser(null);
-    navigate('/login');
+    logout();
   };
 
   return (

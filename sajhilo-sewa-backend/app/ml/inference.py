@@ -164,11 +164,8 @@ class GestureRecognizer:
     # ── Frame processing ──────────────────────────────────────────
 
     def _extract_from_frame(self, frame: np.ndarray) -> np.ndarray:
-        """Run MediaPipe on one BGR or RGB frame, return (21,3) landmarks."""
-        if len(frame.shape) == 3 and frame.shape[2] == 3:
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        else:
-            rgb = frame
+        """Run MediaPipe on one RGB frame, return (21,3) landmarks."""
+        rgb = frame  # PIL decode already provides RGB
 
         if _MP_NEW_API:
             from app.ml.preprocessing import run_mediapipe
@@ -181,17 +178,6 @@ class GestureRecognizer:
     def process_frame(self, client_id: str, frame_input) -> dict:
         """
         Accept one frame, update the rolling buffer, and return a prediction.
-
-        Args:
-            client_id   : identifies which connection this frame belongs to
-            frame_input : numpy BGR array  OR  base64 string (from React webcam)
-
-        Returns dict:
-            success    : bool
-            gesture    : predicted class name (if success)
-            confidence : float 0-1 (if success)
-            message    : human-readable status (if not success)
-            buffer_progress : "current/30" — shows how full the buffer is
         """
         # ── Ensure buffer exists ──────────────────────────────────
         if client_id not in self._buffers:
@@ -199,12 +185,15 @@ class GestureRecognizer:
 
         # ── Decode frame ──────────────────────────────────────────
         if isinstance(frame_input, str):
-            # Strip data URL prefix if present
             if "," in frame_input:
                 frame_input = frame_input.split(",")[1]
-            img_bytes = base64.b64decode(frame_input)
-            pil_img   = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            frame     = np.array(pil_img)
+            try:
+                img_bytes = base64.b64decode(frame_input)
+                pil_img   = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                frame     = np.array(pil_img)
+            except Exception as e:
+                print(f"❌ Base64 decode error: {e}")
+                return {"success": False, "message": "Corrupt frame data."}
         else:
             frame = frame_input
 
@@ -214,17 +203,16 @@ class GestureRecognizer:
         # DEBUG: Check if hand was detected
         if np.all(landmarks == 0):
              if self._inference_skip_counters[client_id] % 20 == 0:
-                print(f"⚠️  [ID:{client_id}] No hand detected. (Frame Shape: {frame.shape})")
+                print(f"⚠️  [ID:{client_id}] No hand detected.")
 
         # ── Update rolling buffer ─────────────────────────────────
         buf = self._buffers[client_id]
         buf.append(landmarks)
         if len(buf) > SEQUENCE_LENGTH:
-            buf.pop(0)   # sliding window — drop oldest frame
+            buf.pop(0)
 
         buf_len = len(buf)
 
-        # ── Need full 30-frame window to predict ──────────────────
         if buf_len < SEQUENCE_LENGTH:
             return {
                 "success": False,
@@ -235,62 +223,67 @@ class GestureRecognizer:
         if self.ensemble is None:
             return {
                 "success": False,
-                "message": "Models not loaded. Run training first.",
+                "message": "Models not loaded.",
                 "buffer_progress": f"{buf_len}/{SEQUENCE_LENGTH}",
             }
 
         # ── Run ensemble prediction ───────────────────────────────
-        sequence  = np.array(buf, dtype=np.float32)    # (30, 21, 3)
-        X         = sequence[np.newaxis]                # (1, 30, 21, 3)
-        inputs    = preprocess_for_models(X)            # per-model shapes
+        sequence  = np.array(buf, dtype=np.float32)
+        
+        # 🧪 SAFETY CHECK: Skip inference if buffer is entirely empty
+        if np.all(sequence == 0):
+             res = {
+                "success": False,
+                "message": "No hand detected. Awaiting gestures...",
+                "buffer_progress": f"{buf_len}/{SEQUENCE_LENGTH}",
+                "sentence": " ".join(self._sentences[client_id])
+            }
+             self._last_results[client_id] = res
+             return res
 
-        # ── Frame Skipping — Only run heavy ML every N frames ─────
+        X         = sequence[np.newaxis]
+        inputs    = preprocess_for_models(X)
+
         self._inference_skip_counters[client_id] += 1
         if (self._inference_skip_counters[client_id] % self._inference_frequency != 0 and 
             self._last_raw_prediction.get(client_id)):
-            # Return cached result for skipped frames
             return self._last_results[client_id]
 
         result = self.ensemble.predict_single(inputs)
         raw_gesture = result["gesture"]
         confidence  = result["confidence"]
 
-        # DEBUG: Print all predictions regardless of confidence (less frequently)
         if self._inference_skip_counters[client_id] % 15 == 0:
-            print(f"🔍 [Inference] Raw: {raw_gesture} ({confidence:.0%}) | Stable: {' '.join(self._sentences[client_id])[-20:]}")
+            print(f"🔍 [Inference] Raw: {raw_gesture} ({confidence:.0%})")
 
         # ── Stability & Sentence Accumulation ─────────────────────
         if confidence < CONFIDENCE_THRESHOLD:
-            # Low confidence resets the stability counter
             self._stability_counters[client_id] = 0
             self._last_raw_prediction[client_id] = ""
             
             res = {
                 "success": False,
                 "gesture": raw_gesture,
+                "confidence": confidence,
                 "message": f"Low confidence ({confidence:.0%})",
                 "buffer_progress": f"{buf_len}/{SEQUENCE_LENGTH}",
-                "confidence": confidence,
                 "sentence": " ".join(self._sentences[client_id])
             }
             self._last_results[client_id] = res
             return res
 
-        # If it's the same gesture as the previous frame, increment counter
         if raw_gesture == self._last_raw_prediction.get(client_id):
             self._stability_counters[client_id] += 1
         else:
             self._stability_counters[client_id] = 1
             self._last_raw_prediction[client_id] = raw_gesture
 
-        # Has it reached the stability threshold?
         if (self._stability_counters[client_id] >= self._stability_threshold and 
             raw_gesture != self._last_stable_gesture.get(client_id)):
             
-            # Add to sentence!
             self._sentences[client_id].append(raw_gesture)
             self._last_stable_gesture[client_id] = raw_gesture
-            print(f"✨ Recognised stable word: {raw_gesture} | Full: {' '.join(self._sentences[client_id])}")
+            print(f"✨ Recognised stable word: {raw_gesture}")
 
         final_result = {
             "success":        True,
@@ -305,7 +298,7 @@ class GestureRecognizer:
         return final_result
 
     def clear_sentence(self, client_id: str):
-        """Clear the accumulated sentence for a client."""
+        """Clear the accumulated sentence and reset stability state."""
         if client_id in self._sentences:
             self._sentences[client_id] = []
             self._last_stable_gesture[client_id] = ""
@@ -320,6 +313,7 @@ class GestureRecognizer:
 # ── Global singleton ──────────────────────────────────────────────────────────
 # Instantiated once when the module is first imported.
 recognizer = GestureRecognizer()
+
 class AlphabetRecognizer:
     def __init__(self):
         self.device = DEVICE
@@ -375,8 +369,7 @@ class AlphabetRecognizer:
 
     def process_frame(self, client_id, frame_input):
         import numpy as np, cv2, base64, io, torch
-        from PIL import Image
-        from app.ml.preprocessing import extract_keypoints
+        from app.ml.preprocessing import extract_keypoints, normalize_keypoints
         
         # Ensure client is initialized
         if client_id not in self._sentences:
@@ -392,10 +385,7 @@ class AlphabetRecognizer:
             frame = frame_input
 
         # ── Extract landmarks ─────────────────────────────────────
-        if len(frame.shape) == 3 and frame.shape[2] == 3:
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        else:
-            rgb = frame
+        rgb = frame  # RGB from PIL
 
         if _MP_NEW_API:
             from app.ml.preprocessing import run_mediapipe
@@ -404,14 +394,19 @@ class AlphabetRecognizer:
             results = self._hands.process(rgb)
         
         landmarks = extract_keypoints(results) 
-        if np.all(landmarks == 0): return {'success': False, 'gesture': 'No hand', 'sentence': self._sentences[client_id]}
+        if np.all(landmarks == 0):
+            return {'success': False, 'gesture': 'No hand', 'sentence': self._sentences[client_id]}
+
+        # ── Normalization (VERY IMPORTANT for MLP) ──────────────────
+        normalized_landmarks = normalize_keypoints(landmarks)
+        
         with torch.no_grad():
-            out = self.model(torch.FloatTensor(landmarks.flatten()).unsqueeze(0).to(self.device))
+            from app.ml.models.alphabet_model import AlphabetModel
+            out = self.model(torch.FloatTensor(normalized_landmarks.flatten()).unsqueeze(0).to(self.device))
             probs = torch.softmax(out, dim=1).cpu().numpy()[0]
             idx = np.argmax(probs)
             label, conf = self.labels[idx], float(probs[idx])
         if conf > 0.45:
-            # DEBUG: print(f"Alphabet Detect: {label} ({conf:.2f}) | Stability: {self._stability_counters.get(client_id, 0)}/{self._stability_threshold}")
             if label == self._last_raw_prediction.get(client_id):
                 self._stability_counters[client_id] += 1
             else:
@@ -431,7 +426,10 @@ class AlphabetRecognizer:
         
         return {'success': True, 'gesture': label, 'confidence': conf, 'sentence': self._sentences[client_id]}
 
-    def clear_sentence(self, client_id): self._sentences[client_id] = ''
+    def clear_sentence(self, client_id: str):
+        """Clear the accumulated word and reset stability state."""
+        self._sentences[client_id] = ""
+        self._last_raw_prediction[client_id] = ""
+        self._stability_counters[client_id] = 0
 
 alphabet_recognizer = AlphabetRecognizer()
-

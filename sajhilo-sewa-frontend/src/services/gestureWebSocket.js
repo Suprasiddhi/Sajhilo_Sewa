@@ -85,11 +85,21 @@ class GestureWebSocket {
         }
     }
 
+    // ── Clear the accumulated sentence ────────────────────────────────────────
+    clearSentence() {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ type: "clear_sentence" }));
+        }
+    }
+
     // ── Disconnect ────────────────────────────────────────────────────────────
     disconnect() {
         this.stopCapture();
         this.ws?.close();
         this.ws = null;
+        this.onResult = null;
+        this.onStatus = null;
+        this.onConnected = null;
     }
 
     // ── Internal message router ───────────────────────────────────────────────

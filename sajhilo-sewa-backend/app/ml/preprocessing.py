@@ -77,6 +77,31 @@ def extract_keypoints(results) -> np.ndarray:
     return np.zeros((NUM_JOINTS, COORDS), dtype=np.float32)
 
 
+def normalize_keypoints(landmarks: np.ndarray) -> np.ndarray:
+    """
+    Standardize the hand scale and position.
+    1. Center the hand by making the wrist (index 0) the origin (0,0,0).
+    2. Scale the hand so that all landmarks fit within a consistent range.
+    """
+    if np.all(landmarks == 0):
+        return landmarks
+
+    # Copy to avoid modifying original
+    landmarks = landmarks.copy()
+
+    # 1. Centering (Relative to wrist)
+    wrist = landmarks[0]
+    landmarks = landmarks - wrist
+
+    # 2. Scaling
+    # Find the maximum absolute value among remaining coordinates
+    max_val = np.abs(landmarks).max()
+    if max_val > 0:
+        landmarks = landmarks / max_val
+
+    return landmarks.astype(np.float32)
+
+
 def run_mediapipe(image_rgb: np.ndarray, hands_detector):
     """Helper: dispatch to old or new MediaPipe API."""
     # Resize to square to suppress MediaPipe warnings about non-square ROIs.

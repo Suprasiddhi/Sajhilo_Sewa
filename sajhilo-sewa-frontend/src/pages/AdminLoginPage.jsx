@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import styles from './AdminLoginPage.module.css';
 
 const AdminLoginPage = () => {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 

@@ -14,11 +14,12 @@ const EnglishTextOutput = ({ text }) => {
       </div>
 
       <div className={styles.recognitionBox}>
-        {text ? (
-          <span className={styles.text}>{text}</span>
-        ) : (
-          <p className={styles.placeholderText}>Recognized gesture will appear here...</p>
-        )}
+        <div className={styles.textContainer}>
+          <span className={styles.text}>
+            {text || <span className={styles.placeholderText}>Recognized gesture will appear here...</span>}
+          </span>
+          <span className={styles.cursor}></span>
+        </div>
       </div>
 
       <div className={styles.footer}>

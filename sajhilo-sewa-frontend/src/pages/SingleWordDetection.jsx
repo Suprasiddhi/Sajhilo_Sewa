@@ -15,7 +15,7 @@ function SingleWordDetection() {
 
   const handleRecognition = (result) => {
     setRecognitionResult({
-      english: result.sentence, // The whole word built so far
+      english: result.sentence, // The accumulated word or sentence
       nepali: result.gesture,    // The current letter detected
       confidence: result.confidence
     });
@@ -47,9 +47,7 @@ function SingleWordDetection() {
             <button 
               className={styles.clearButton} 
               onClick={() => {
-                if (gestureWebSocket.ws?.readyState === WebSocket.OPEN) {
-                  gestureWebSocket.ws.send(JSON.stringify({ type: "clear_sentence" }));
-                }
+                gestureWebSocket.clearSentence();
                 setRecognitionResult({ english: "", nepali: "", confidence: 0 });
               }}
             >

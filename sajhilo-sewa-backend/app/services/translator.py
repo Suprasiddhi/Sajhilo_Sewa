@@ -43,26 +43,28 @@ class TranslatorService:
         Translates text to Nepali. 
         Checks local dictionary first for speed, then calls API.
         """
-        if not text:
+        if text is None or not str(text).strip():
             return ""
         
-        text_lower = text.lower().strip()
+        text_str = str(text).lower().strip()
         
         # 1. Quick Dictionary Check
-        if text_lower in self.mapping:
-            return self.mapping[text_lower]
+        if text_str in self.mapping:
+            return self.mapping[text_str]
         
         # 2. API Call (if available)
-        if _use_api:
+        if _use_api and self.translator:
             try:
-                # googletrans is synchronous, but we can wrap it if needed. 
-                # For single words, it's fast enough (~200ms).
                 result = self.translator.translate(text, dest='ne')
-                # Cache the result for future use
-                self.mapping[text_lower] = result.text
-                return result.text
+                if result and hasattr(result, 'text') and result.text:
+                    translated = str(result.text)
+                    # Cache the result for future use
+                    self.mapping[text_str] = translated
+                    return translated
             except Exception as e:
-                print(f"⚠️ Translation API Error: {e}")
+                # This catches the common "NoneType found" error in googletrans
+                if "NoneType" not in str(e):
+                    print(f"⚠️ Translation API Error: {e}")
                 return text  # Return original as fallback
         
         return text

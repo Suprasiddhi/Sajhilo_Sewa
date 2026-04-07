@@ -7,6 +7,8 @@ import AdminDashboardUsers from './AdminDashboardUsers';
 import AdminDashboardGesture from './AdminDashboardGesture';
 import AdminDashboardHistory from './AdminDashboardHistory';
 
+import { logout } from '../utils/auth';
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
@@ -115,10 +117,7 @@ const AdminDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user_data');
-    navigate('/login');
+    logout();
   };
 
   const handleProcessVideos = async () => {

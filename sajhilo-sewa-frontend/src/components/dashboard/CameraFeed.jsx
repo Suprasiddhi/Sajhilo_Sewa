@@ -27,9 +27,11 @@ const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
       gestureWebSocket.onResult = (result) => {
         if (onRecognition) {
           onRecognition({
-            english: result.gesture,
-            nepali: result.nepali, // Using backend-provided translation
-            confidence: result.confidence
+            gesture: result.gesture,
+            nepali: result.nepali,
+            confidence: result.confidence,
+            sentence: result.sentence,
+            nepaliSentence: result.nepaliSentence
           });
         }
       };
@@ -52,12 +54,11 @@ const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
   };
 
   useEffect(() => {
+    // Cleanup on unmount
     return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopCamera();
     };
-  }, [stream]);
+  }, []);
 
   return (
     <div className={styles.container}>

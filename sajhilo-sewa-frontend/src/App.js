@@ -10,6 +10,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import SingleWordDetection from "./pages/SingleWordDetection";
 import UpdateProfilePage from "./pages/UpdateProfilePage";
 import MainLayout from "./components/layout/MainLayout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import './App.css';
 
 function App() {
@@ -18,23 +19,70 @@ function App() {
       <Routes>
         {/* Admin Routes - No Global Layout */}
         <Route path="/admin" element={<AdminLoginPage />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route 
+          path="/admin/dashboard" 
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/login" element={<UserLoginPage />} />
         <Route path="/register" element={<UserRegisterPage />} />
         <Route path="/updateprofile" element={<UpdateProfilePage />} />
 
-        {/* User Routes - With Layout */}
+        {/* Unified Layout with Granular Protection */}
         <Route
           path="*"
           element={
             <MainLayout>
               <Routes>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/single-word-detection" element={<SingleWordDetection />} />
-                <Route path="/practice" element={<PracticePage />} />
-                <Route path="/work/:id/:title" element={<GestureDetailPage />} />
-                <Route path="/history" element={<div style={{ padding: '40px', textAlign: 'center' }}><h2>History Coming Soon</h2></div>} />
-                <Route path="/settings" element={<div style={{ padding: '40px', textAlign: 'center' }}><h2>Settings Coming Soon</h2></div>} />
+                
+                {/* Protected User Features */}
+                <Route 
+                  path="/single-word-detection" 
+                  element={
+                    <ProtectedRoute>
+                      <SingleWordDetection />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/practice" 
+                  element={
+                    <ProtectedRoute>
+                      <PracticePage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/work/:id/:title" 
+                  element={
+                    <ProtectedRoute>
+                      <GestureDetailPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/history" 
+                  element={
+                    <ProtectedRoute>
+                      <div style={{ padding: '40px', textAlign: 'center' }}><h2>History Coming Soon</h2></div>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <div style={{ padding: '40px', textAlign: 'center' }}><h2>Settings Coming Soon</h2></div>
+                    </ProtectedRoute>
+                  } 
+                />
+
+                {/* 404 handler */}
+                <Route path="*" element={<div style={{ padding: '40px', textAlign: 'center' }}><h2>Page Not Found</h2></div>} />
               </Routes>
             </MainLayout>
           }
