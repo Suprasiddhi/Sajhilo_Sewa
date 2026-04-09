@@ -228,98 +228,7 @@
   max-height: 400px;
 }
 
-.systemGrid {
-  margin-bottom: 24px;
-  width: 100%;
-}
 
-.systemCard {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-sm);
-}
-
-.cardHeaderSmall {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.systemBadge {
-  background: #f0fdf4;
-  color: #16a34a;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.systemBadge::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: currentColor;
-  border-radius: 50%;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.systemButtons {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-
-.processBtn, .retrainBtn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.processBtn {
-  background: var(--bg-color);
-  color: var(--text-main);
-  border: 1px solid var(--border-color);
-}
-
-.processBtn:hover {
-  background: var(--secondary-green);
-  border-color: var(--primary-green);
-  color: var(--primary-green);
-  transform: translateY(-2px);
-}
-
-.retrainBtn {
-  background: linear-gradient(135deg, #6366f1, #4f46e5);
-  color: white;
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
-}
-
-.retrainBtn:hover {
-  background: linear-gradient(135deg, #4f46e5, #4338ca);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.3);
-}
-
-.systemNote {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  font-style: italic;
-}
 
 .cardTitle {
   font-size: 1.125rem;
@@ -1145,3 +1054,138 @@
   color: #ef4444;
   transform: scale(1.1);
 }
+
+.analysisBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  color: var(--primary-green);
+  border: 1px solid var(--primary-green);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.analysisBtn:hover {
+  background: var(--secondary-green);
+  transform: translateY(-2px);
+}
+
+.analysisContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modelAnalysisCard {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 16px;
+}
+
+.modelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.modelHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.statusReady {
+  color: #22c55e;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: #f0fdf4;
+  border-radius: 6px;
+}
+
+.statusPending {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.modelStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.modelStat {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--primary-green);
+}
+
+.progressBarBg {
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-green), var(--accent-green));
+  transition: width 1s ease-out;
+}
+
+.ensembleCard {
+  background: white;
+  border: 2px solid var(--secondary-green);
+  padding: 20px;
+  border-radius: 16px;
+  margin-top: 8px;
+}
+
+.ensembleGrid {
+  display: flex;
+  gap: 16px;
+}
+
+.ensembleInfo {
+  flex: 1;
+}
+
+.ensembleInfo p {
+  margin: 4px 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.weightsList ul {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0 0;
+  display: flex;
+  gap: 12px;
+}
+
+.weightsList li {
+  background: var(--bg-color);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--primary-green);
+}
+

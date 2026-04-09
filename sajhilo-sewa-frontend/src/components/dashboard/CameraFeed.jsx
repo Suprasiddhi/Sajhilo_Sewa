@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './CameraFeed.module.css';
 import gestureWebSocket from '../../services/gestureWebSocket';
+import { getToken } from '../../utils/auth';
 
 const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
   const navigate = useNavigate();
@@ -24,6 +25,21 @@ const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
       const clientId = `client_${Math.random().toString(36).substr(2, 9)}`;
       gestureWebSocket.connect(clientId, mode);
       
+      // --- Authentication Sync ---
+      const token = getToken();
+      if (token) {
+        // Wait for WebSocket to open before sending auth
+        setTimeout(() => {
+          if (gestureWebSocket.ws && gestureWebSocket.ws.readyState === WebSocket.OPEN) {
+            gestureWebSocket.ws.send(JSON.stringify({
+              type: "auth",
+              token: token
+            }));
+            console.log("🔐 CameraFeed: Sent auth token to backend");
+          }
+        }, 1000);
+      }
+      
       gestureWebSocket.onResult = (result) => {
         if (onRecognition) {
           onRecognition({
@@ -31,7 +47,8 @@ const CameraFeed = ({ onRecognition, mode = "recognition" }) => {
             nepali: result.nepali,
             confidence: result.confidence,
             sentence: result.sentence,
-            nepaliSentence: result.nepaliSentence
+            nepaliSentence: result.nepaliSentence,
+            is_final: result.is_final
           });
         }
       };

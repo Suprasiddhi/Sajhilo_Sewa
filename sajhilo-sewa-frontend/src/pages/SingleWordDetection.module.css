@@ -62,8 +62,9 @@
 
 .dashboardGrid {
   display: grid;
-  grid-template-columns: 1.8fr 1.2fr;
-  gap: 40px;
+  grid-template-columns: 1fr 2fr;
+  gap: 32px;
+  align-items: flex-start;
 }
 
 .mainColumn {
@@ -76,6 +77,7 @@
 .sideColumn {
   display: flex;
   flex-direction: column;
+  gap: 12px;
   animation: slideUp 0.8s var(--ease) both;
   animation-delay: 0.2s;
 }
@@ -114,12 +116,15 @@
 
 .outputControls {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 12px;
   background: white;
-  padding: 20px;
+  padding: 0;
   border-radius: var(--border-radius);
-  box-shadow: var(--shadow-sm);
+}
+
+.outputControls :first-child {
+  width: 100%;
 }
 
 .outputControls > div {
@@ -127,11 +132,12 @@
 }
 
 .clearButton {
-  padding: 12px 24px;
+  padding: 8px 16px;
+  width: 100%;
   background: var(--error-red, #ff4d4f);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s var(--ease);

@@ -278,18 +278,24 @@ class GestureRecognizer:
             self._stability_counters[client_id] = 1
             self._last_raw_prediction[client_id] = raw_gesture
 
+        is_final = False
         if (self._stability_counters[client_id] >= self._stability_threshold and 
             raw_gesture != self._last_stable_gesture.get(client_id)):
             
-            self._sentences[client_id].append(raw_gesture)
-            self._last_stable_gesture[client_id] = raw_gesture
-            print(f"✨ Recognised stable word: {raw_gesture}")
+            if raw_gesture == 'ok':
+                is_final = True
+                print("🏁 Session end gesture detected: 'ok'")
+            else:
+                self._sentences[client_id].append(raw_gesture)
+                self._last_stable_gesture[client_id] = raw_gesture
+                print(f"✨ Recognised stable word: {raw_gesture}")
 
         final_result = {
             "success":        True,
             "gesture":        raw_gesture,
             "confidence":     confidence,
             "sentence":       " ".join(self._sentences[client_id]),
+            "is_final":       is_final,
             "all_probs":      result["all_probs"],
             "model_votes":    result["model_votes"],
             "buffer_progress": f"{buf_len}/{SEQUENCE_LENGTH}",
@@ -413,18 +419,29 @@ class AlphabetRecognizer:
                 self._stability_counters[client_id] = 1
                 self._last_raw_prediction[client_id] = label
 
+            is_final = False
             if self._stability_counters[client_id] == self._stability_threshold:
                 if label == 'space':
                     self._sentences[client_id] += ' '
                 elif label == 'del':
                     self._sentences[client_id] = self._sentences[client_id][:-1]
+                elif label == 'thumbs_up':
+                    is_final = True
+                    print("🏁 Session end gesture detected: 'thumbs_up'")
                 elif label != 'nothing':
                     self._sentences[client_id] += label
                 print(f"✨ Typed Letter: {label} | Current Word: {self._sentences[client_id]}")
         else:
              self._stability_counters[client_id] = 0
+             is_final = False
         
-        return {'success': True, 'gesture': label, 'confidence': conf, 'sentence': self._sentences[client_id]}
+        return {
+            'success': True, 
+            'gesture': label, 
+            'confidence': conf, 
+            'sentence': self._sentences[client_id],
+            'is_final': is_final
+        }
 
     def clear_sentence(self, client_id: str):
         """Clear the accumulated word and reset stability state."""

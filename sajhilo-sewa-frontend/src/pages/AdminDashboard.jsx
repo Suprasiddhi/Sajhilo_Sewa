@@ -5,8 +5,6 @@ import styles from './AdminDashboard.module.css';
 // Sub-components
 import AdminDashboardUsers from './AdminDashboardUsers';
 import AdminDashboardGesture from './AdminDashboardGesture';
-import AdminDashboardHistory from './AdminDashboardHistory';
-
 import { logout } from '../utils/auth';
 
 const AdminDashboard = () => {
@@ -23,6 +21,8 @@ const AdminDashboard = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditId, setCurrentEditId] = useState(null);
   const [gestureData, setGestureData] = useState({
@@ -120,32 +120,19 @@ const AdminDashboard = () => {
     logout();
   };
 
-  const handleProcessVideos = async () => {
+  const handleFetchAnalysis = async () => {
     try {
       const token = localStorage.getItem('access_token');
-      const res = await fetch('http://localhost:8000/api/ml/process-videos', {
-        method: 'POST',
+      const res = await fetch('http://localhost:8000/api/ml/analysis', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const data = await res.json();
-      alert(data.message || "Video processing started in background.");
+      if (res.ok) {
+        const data = await res.json();
+        setAnalysisData(data);
+        setIsAnalysisModalOpen(true);
+      }
     } catch (err) {
-      alert("Failed to start processing: " + err.message);
-    }
-  };
-
-  const handleRetrain = async () => {
-    if (!window.confirm("Full training takes 10-30 min. Continue?")) return;
-    try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch('http://localhost:8000/api/ml/train', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      alert(data.message || "Training started in background.");
-    } catch (err) {
-      alert("Failed to start training: " + err.message);
+      console.error("Error fetching analysis:", err);
     }
   };
 
@@ -342,16 +329,6 @@ const AdminDashboard = () => {
         </svg>
       )
     },
-    { 
-      id: 'history', 
-      label: 'History',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 8v4l3 3" />
-          <circle cx="12" cy="12" r="9" />
-        </svg>
-      )
-    },
   ];
 
   return (
@@ -402,6 +379,15 @@ const AdminDashboard = () => {
             <div className={styles.sectionContent}>
               <header className={styles.header}>
                 <h1 className={styles.title}>Dashboard Overview</h1>
+                <button 
+                  className={styles.analysisBtn}
+                  onClick={handleFetchAnalysis}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+                  </svg>
+                  <span>Model Analysis</span>
+                </button>
               </header>
 
               <div className={styles.statsGrid}>
@@ -433,34 +419,6 @@ const AdminDashboard = () => {
                     <span className={styles.statLabel}>Total Gestures</span>
                     <h2 className={styles.statValue}>{stats.total_gestures}</h2>
                   </div>
-                </div>
-              </div>
-
-              <div className={styles.systemGrid}>
-                <div className={styles.systemCard}>
-                  <div className={styles.cardHeaderSmall}>
-                    <h3 className={styles.cardTitle}>ML System Management</h3>
-                    <div className={styles.systemBadge}>Ready</div>
-                  </div>
-                  <div className={styles.systemButtons}>
-                    <button onClick={handleProcessVideos} className={styles.processBtn}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      <span>Process Videos</span>
-                    </button>
-                    <button onClick={handleRetrain} className={styles.retrainBtn}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 12c0-4.4 3.6-8 8-8 3.3 0 6.2 2 7.4 5M22 12c0 4.4-3.6 8-8 8-3.3 0-6.2-2-7.4-5" />
-                      </svg>
-                      <span>Retrain Model</span>
-                    </button>
-                  </div>
-                  <p className={styles.systemNote}>
-                    * Run "Process Videos" first if you have uploaded new gestures.
-                  </p>
                 </div>
               </div>
 
@@ -542,8 +500,6 @@ const AdminDashboard = () => {
               handleSubmit={handleSubmit}
             />
           )}
-
-          {activeSection === 'history' && <AdminDashboardHistory />}
         </main>
       </div>
 
@@ -724,8 +680,86 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+
+      {isAnalysisModalOpen && analysisData && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modal} style={{ maxWidth: '600px' }}>
+            <header className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>System Model Analysis</h2>
+              <button 
+                className={styles.closeButton}
+                onClick={() => setIsAnalysisModalOpen(false)}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </header>
+            <div className={styles.modalBody}>
+              <div className={styles.analysisContainer}>
+                {['TCN', 'BiLSTM', 'ST-GCN', 'Alphabet'].map(model => (
+                  <div key={model} className={styles.modelAnalysisCard}>
+                    <div className={styles.modelHeader}>
+                      <h3>{model === 'Alphabet' ? 'Single Word (Alphabet)' : `${model} Model`}</h3>
+                      <span className={analysisData[model]?.training_complete ? styles.statusReady : styles.statusPending}>
+                        {analysisData[model]?.training_complete ? 'Trained' : 'No Data'}
+                      </span>
+                    </div>
+                    <div className={styles.modelStats}>
+                      <div className={styles.modelStat}>
+                        <span className={styles.statLabel}>Best Accuracy</span>
+                        <span className={styles.statValue}>{analysisData[model]?.accuracy}%</span>
+                      </div>
+                      <div className={styles.modelStat}>
+                        <span className={styles.statLabel}>Epochs</span>
+                        <span className={styles.statValue}>{analysisData[model]?.epochs}</span>
+                      </div>
+                    </div>
+                    <div className={styles.progressBarBg}>
+                      <div 
+                        className={styles.progressBarFill} 
+                        style={{ width: `${analysisData[model]?.accuracy}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+
+                {analysisData.Ensemble && (
+                  <div className={styles.ensembleCard}>
+                    <h3 className={styles.cardTitle}>Ensemble Calibration</h3>
+                    <div className={styles.ensembleGrid}>
+                      <div className={styles.ensembleInfo}>
+                        <p>Total Gestures Supported: <strong>{analysisData.Ensemble.gestures_count}</strong></p>
+                        <div className={styles.weightsList}>
+                          <p>Voting Weights:</p>
+                          <ul>
+                            <li>TCN: {roundWeight(analysisData.Ensemble.weights[0])}</li>
+                            <li>BiLSTM: {roundWeight(analysisData.Ensemble.weights[1])}</li>
+                            <li>ST-GCN: {roundWeight(analysisData.Ensemble.weights[2])}</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <footer className={styles.modalFooter}>
+              <button 
+                className={styles.submitBtn}
+                onClick={() => setIsAnalysisModalOpen(false)}
+              >
+                Close Analysis
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
+const roundWeight = (val) => val ? val.toFixed(3) : '0.000';
 
 export default AdminDashboard;

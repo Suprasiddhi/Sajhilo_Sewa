@@ -49,16 +49,6 @@ const Sidebar = () => {
           <span>Practice Mode</span>
         </NavLink>
 
-        <NavLink 
-          to="/history" 
-          className={({ isActive }) => isActive ? `${styles.navLink} ${styles.active}` : styles.navLink}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 8v4l3 3" />
-            <circle cx="12" cy="12" r="9" />
-          </svg>
-          <span>History</span>
-        </NavLink>
       </nav>
 
     </aside>

@@ -94,6 +94,7 @@ def train_alphabet_model(X, y, num_classes):
     
     best_acc = 0
     epochs = 50
+    history = {"epoch": [], "train_loss": [], "val_acc": []}
     
     for epoch in range(1, epochs + 1):
         model.train()
@@ -119,6 +120,10 @@ def train_alphabet_model(X, y, num_classes):
                 total += yb.size(0)
         
         acc = correct / total
+        history["epoch"].append(epoch)
+        history["train_loss"].append(round(total_loss/len(train_loader), 4))
+        history["val_acc"].append(round(acc, 4))
+
         if acc > best_acc:
             best_acc = acc
             torch.save(model.state_dict(), os.path.join(WEIGHTS_DIR, "alphabet_best.pth"))
@@ -127,6 +132,10 @@ def train_alphabet_model(X, y, num_classes):
             print(f"  Epoch {epoch:02d} | Loss: {total_loss/len(train_loader):.4f} | Acc: {acc:.4f}" + (" (best)" if acc == best_acc else ""))
             
     print(f"\n✅ Training complete! Best Accuracy: {best_acc:.4f}")
+    
+    # Save history
+    with open(os.path.join(WEIGHTS_DIR, "alphabet_best_history.json"), "w") as f:
+        json.dump(history, f, indent=2)
     
     # Final Report
     model.load_state_dict(torch.load(os.path.join(WEIGHTS_DIR, "alphabet_best.pth")))

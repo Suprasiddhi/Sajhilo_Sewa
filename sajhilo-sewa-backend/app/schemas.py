@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
-
+from datetime import datetime
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  USER SCHEMAS  (your original code — unchanged)
+#  USER SCHEMAS 
 # ─────────────────────────────────────────────────────────────────────────────
 class UserBase(BaseModel):
     username: str
@@ -28,7 +28,7 @@ class User(UserBase):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  AUTH SCHEMAS  (new — needed for login / register responses)
+#  AUTH SCHEMAS 
 # ─────────────────────────────────────────────────────────────────────────────
 class TokenResponse(BaseModel):
     """Returned by /auth/login and /auth/refresh."""

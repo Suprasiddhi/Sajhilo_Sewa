@@ -65,14 +65,6 @@ function App() {
                   } 
                 />
                 <Route 
-                  path="/history" 
-                  element={
-                    <ProtectedRoute>
-                      <div style={{ padding: '40px', textAlign: 'center' }}><h2>History Coming Soon</h2></div>
-                    </ProtectedRoute>
-                  } 
-                />
-                <Route 
                   path="/settings" 
                   element={
                     <ProtectedRoute>

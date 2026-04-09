@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styles from "./SingleWordDetection.module.css";
 import CameraFeed from "../components/dashboard/CameraFeed";
-import RecognitionHistory from "../components/dashboard/RecognitionHistory";
 import NepaliTranslation from "../components/dashboard/NepaliTranslation";
 import EnglishTextOutput from "../components/dashboard/EnglishTextOutput";
 import gestureWebSocket from "../services/gestureWebSocket";
@@ -33,15 +32,7 @@ function SingleWordDetection() {
       </header>
 
       <div className={styles.dashboardGrid}>
-        <div className={styles.mainColumn}>
-          <CameraFeed onRecognition={handleRecognition} mode="alphabet" />
-        </div>
-        
         <div className={styles.sideColumn}>
-          <RecognitionHistory />
-        </div>
-
-        <div className={styles.fullWidthRow}>
           <div className={styles.outputControls}>
             <EnglishTextOutput text={recognitionResult.english || "..."} />
             <button 
@@ -54,12 +45,14 @@ function SingleWordDetection() {
               Clear Text
             </button>
           </div>
-        </div>
-        <div className={styles.fullWidthRow}>
           <NepaliTranslation 
             text={recognitionResult.nepali || "None"} 
             confidence={recognitionResult.confidence} 
           />
+        </div>
+
+        <div className={styles.mainColumn}>
+          <CameraFeed onRecognition={handleRecognition} mode="alphabet" />
         </div>
       </div>
     </div>

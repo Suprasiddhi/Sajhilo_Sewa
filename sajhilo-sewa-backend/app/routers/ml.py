@@ -20,6 +20,9 @@ from app.ml.inference import recognizer
 from app.ml.dataset   import process_video_dataset, load_gestures_from_summary
 from app.ml.train     import run_train
 from app.auth_utils import get_current_user   # your existing auth guard
+from app.ml.config import WEIGHTS_DIR
+import os
+import json
 
 router = APIRouter()
 
@@ -35,6 +38,54 @@ async def ml_status(_=Depends(get_current_user)):
         "num_classes":   recognizer.num_classes,
         "ws_clients":    manager.connected_count,
     }
+
+
+# ── GET /api/ml/analysis ──────────────────────────────────────────────────────
+@router.get("/analysis", summary="Get model performance analysis")
+async def get_model_analysis(_=Depends(get_current_user)):
+    """
+    Reads history JSON files from WEIGHTS_DIR and returns the best 
+    validation accuracy for each model, plus ensemble info.
+    """
+    analysis = {}
+    
+    files = {
+        "TCN": "tcn_best_history.json",
+        "BiLSTM": "bilstm_best_history.json",
+        "ST-GCN": "stgcn_best_history.json",
+        "Alphabet": "alphabet_best_history.json"
+    }
+    
+    for model_name, filename in files.items():
+        path = os.path.join(WEIGHTS_DIR, filename)
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                history = json.load(f)
+                # Take the max val_acc
+                max_acc = max(history.get("val_acc", [0]))
+                analysis[model_name] = {
+                    "accuracy": round(max_acc * 100, 2),
+                    "epochs": len(history.get("epoch", [])),
+                    "training_complete": True
+                }
+        else:
+            analysis[model_name] = {
+                "accuracy": 0,
+                "epochs": 0,
+                "training_complete": False
+            }
+
+    # Ensemble weights
+    ensemble_path = os.path.join(WEIGHTS_DIR, "ensemble_weights.json")
+    if os.path.exists(ensemble_path):
+        with open(ensemble_path, 'r') as f:
+            ensemble_data = json.load(f)
+            analysis["Ensemble"] = {
+                "weights": ensemble_data.get("weights", []),
+                "gestures_count": len(ensemble_data.get("gestures", []))
+            }
+
+    return analysis
 
 
 # ── POST /api/ml/process-videos ───────────────────────────────────────────────

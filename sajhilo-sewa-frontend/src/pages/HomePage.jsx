@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import styles from "./HomePage.module.css";
 import CameraFeed from "../components/dashboard/CameraFeed";
-import RecognitionHistory from "../components/dashboard/RecognitionHistory";
 import NepaliTranslation from "../components/dashboard/NepaliTranslation";
 import EnglishTextOutput from "../components/dashboard/EnglishTextOutput";
 import gestureWebSocket from "../services/gestureWebSocket";
@@ -36,15 +35,7 @@ function HomePage() {
       </header>
 
       <div className={styles.dashboardGrid}>
-        <div className={styles.mainColumn}>
-          <CameraFeed onRecognition={handleRecognition} />
-        </div>
-        
         <div className={styles.sideColumn}>
-          <RecognitionHistory />
-        </div>
-
-        <div className={styles.fullWidthRow}>
           <div className={styles.outputControls}>
             <EnglishTextOutput text={recognitionResult.sentence || "..."} />
             <button 
@@ -57,14 +48,15 @@ function HomePage() {
               Clear Text
             </button>
           </div>
-        </div>
-        <div className={styles.fullWidthRow}>
           <NepaliTranslation 
             text={recognitionResult.nepaliSentence || recognitionResult.nepali || "None"} 
             confidence={recognitionResult.confidence} 
           />
         </div>
 
+        <div className={styles.mainColumn}>
+          <CameraFeed onRecognition={handleRecognition} />
+        </div>
       </div>
     </div>
   );

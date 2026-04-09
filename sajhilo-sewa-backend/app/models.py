@@ -57,3 +57,5 @@ class TrainingData(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     gesture = relationship("Gesture", back_populates="training_data")
+
+
