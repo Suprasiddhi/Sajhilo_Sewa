@@ -154,3 +154,48 @@
 .clearButton:active {
   transform: translateY(0);
 }
+
+.accessDeniedWarning {
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  animation: slideDown 0.4s var(--ease);
+}
+
+.warningContent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.warningContent svg {
+  color: #ef4444;
+}
+
+.closeWarning {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #ef4444;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: transform 0.2s ease;
+}
+
+.closeWarning:hover {
+  transform: scale(1.2);
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}

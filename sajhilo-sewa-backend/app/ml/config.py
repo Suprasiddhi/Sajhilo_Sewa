@@ -61,7 +61,7 @@ SLIDING_WINDOW = True
 WINDOW_STRIDE  = 10     # step between clips (10 → 66 % overlap)
 
 # ── Inference ─────────────────────────────────────────────────────────────────
-CONFIDENCE_THRESHOLD = 0.40   # predictions below this are ignored
+CONFIDENCE_THRESHOLD = 0.55   # increased for stability
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # ── Ensure output directories exist at import time ────────────────────────────

@@ -64,10 +64,8 @@ const UserRegisterPage = () => {
     <div className={styles.container}>
       <div className={styles.registerCard}>
         <div className={styles.header}>
-          <div className={styles.logoIcon}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+          <div className={styles.logoImage}>
+            <img src="/logo.png" alt="Sajhilo Sewa Logo" />
           </div>
           <h1 className={styles.title}>Create Account</h1>
           <p className={styles.subtitle}>Join us and start your learning journey</p>

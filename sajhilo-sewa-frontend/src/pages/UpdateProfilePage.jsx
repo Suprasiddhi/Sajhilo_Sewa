@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './UpdateProfilePage.module.css';
 
 const UpdateProfilePage = () => {
@@ -9,32 +9,68 @@ const UpdateProfilePage = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Update profile attempt:', formData);
-    // Functionality not integrated as per request
+    setError('');
+    
+    // 1. Password validation
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:8000/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          new_password: formData.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to update password');
+      }
+
+      // 4. Success navigation
+      navigate('/login', { state: { message: 'password changed' } });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.loginCard}>
         <div className={styles.header}>
-          <div className={styles.logoIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+          <div className={styles.logoImage}>
+            <img src="/logo.png" alt="Sajhilo Sewa Logo" />
           </div>
           <h1 className={styles.title}>Update Profile</h1>
           <p className={styles.subtitle}>Enter your details to reset your password</p>
         </div>
 
         <form className={styles.form} onSubmit={handleSubmit}>
+          {error && <div className={styles.errorMessage}>{error}</div>}
+          
           <div className={styles.inputGroup}>
             <label className={styles.label}>Username *</label>
             <input
@@ -87,8 +123,8 @@ const UpdateProfilePage = () => {
             />
           </div>
 
-          <button type="submit" className={styles.submitButton}>
-            Update Password
+          <button type="submit" className={styles.submitButton} disabled={isLoading}>
+            {isLoading ? 'Updating...' : 'Update Password'}
           </button>
         </form>
 

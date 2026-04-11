@@ -11,6 +11,13 @@ const UserLoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const successMessage = location.state?.message;
+  const redirectError = location.state?.error;
+
+  React.useEffect(() => {
+    if (successMessage || redirectError) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [successMessage, redirectError]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,10 +62,8 @@ const UserLoginPage = () => {
     <div className={styles.container}>
       <div className={styles.loginCard}>
         <div className={styles.header}>
-          <div className={styles.logoIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+          <div className={styles.logoImage}>
+            <img src="/logo.png" alt="Sajhilo Sewa Logo" />
           </div>
           <h1 className={styles.title}>Welcome Back</h1>
           <p className={styles.subtitle}>Enter your details to access your account</p>
@@ -66,6 +71,7 @@ const UserLoginPage = () => {
 
         <form className={styles.form} onSubmit={handleSubmit}>
           {successMessage && <div className={styles.successMessage}>{successMessage}</div>}
+          {redirectError && <div className={styles.errorMessage}>{redirectError}</div>}
           {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.inputGroup}>
             <label className={styles.label}>Email Address</label>

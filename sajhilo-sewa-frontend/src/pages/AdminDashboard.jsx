@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import styles from './AdminDashboard.module.css';
 
 // Sub-components
@@ -8,7 +8,6 @@ import AdminDashboardGesture from './AdminDashboardGesture';
 import { logout } from '../utils/auth';
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('overview');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [stats, setStats] = useState({
@@ -25,6 +24,7 @@ const AdminDashboard = () => {
   const [analysisData, setAnalysisData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditId, setCurrentEditId] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [gestureData, setGestureData] = useState({
     name: '',
     category: 'alphabets',
@@ -227,6 +227,7 @@ const AdminDashboard = () => {
   };
 
   const handleSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const updatedSections = await Promise.all(gestureData.sections.map(async (section) => {
         const updatedMedia = await Promise.all(section.media.map(async (mediaItem) => {
@@ -289,6 +290,8 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("Error submitting gesture:", err);
       alert("Error submitting gesture");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -340,11 +343,8 @@ const AdminDashboard = () => {
           </Link>
         </div>
         <div className={styles.logo}>
-          <div className={styles.logoIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
+          <div className={styles.logoImage}>
+            <img src="/logo.png" alt="Sajhilo Sewa Logo" />
           </div>
           <span className={styles.logoText}>Sajhilo Sewa Admin</span>
         </div>
@@ -673,8 +673,12 @@ const AdminDashboard = () => {
               >
                 Cancel
               </button>
-              <button className={styles.submitBtn} onClick={handleSubmit}>
-                {isEditing ? 'Save Changes' : 'Add Gesture'}
+              <button 
+                className={styles.submitBtn} 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Saving...' : (isEditing ? 'Save Changes' : 'Add Gesture')}
               </button>
             </footer>
           </div>

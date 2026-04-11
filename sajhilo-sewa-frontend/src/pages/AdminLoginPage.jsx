@@ -6,11 +6,13 @@ const AdminLoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
     try {
       const formDetails = new URLSearchParams();
@@ -40,6 +42,8 @@ const AdminLoginPage = () => {
       navigate('/admin/dashboard');
     } catch (err) {
       setError(err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -76,8 +80,8 @@ const AdminLoginPage = () => {
             />
           </div>
           
-          <button type="submit" className={styles.loginButton}>
-            Login
+          <button type="submit" className={styles.loginButton} disabled={isLoading}>
+            {isLoading ? 'Logging In...' : 'Login'}
           </button>
         </form>
       </div>

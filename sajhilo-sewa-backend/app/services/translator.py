@@ -54,7 +54,9 @@ class TranslatorService:
         
         # 1. Quick Dictionary Check
         if text_str in self.mapping:
-            return self.mapping[text_str]
+            translated = self.mapping[text_str]
+            print(f"✅ Local Dictionary Translation: '{text}' -> '{translated}'")
+            return translated
         
         # 2. Deep-Translator API Call
         if _use_api and self.translator:

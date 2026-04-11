@@ -73,7 +73,7 @@ class GestureRecognizer:
         self._stability_counters: dict[str, int] = {}
         self._last_raw_prediction: dict[str, str] = {}
         self._last_stable_gesture: dict[str, str] = {}
-        self._stability_threshold = 3  # frames required for stability
+        self._stability_threshold = 5  # increased for stability
 
         # Frame skipping (only run heavy ML every N frames)
         self._inference_frequency = 2
@@ -330,7 +330,7 @@ class AlphabetRecognizer:
         self._load_model()
         self._stability_counters = {}
         self._last_raw_prediction = {}
-        self._stability_threshold = 3
+        self._stability_threshold = 5  # increased for stability
         self._sentences = {}
         
         # Use consistent MediaPipe initialization

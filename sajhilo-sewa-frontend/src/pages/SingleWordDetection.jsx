@@ -14,8 +14,9 @@ function SingleWordDetection() {
 
   const handleRecognition = (result) => {
     setRecognitionResult({
-      english: result.sentence, // The accumulated word or sentence
-      nepali: result.gesture,    // The current letter detected
+      english: result.sentence,           // The accumulated word
+      nepali: result.nepaliSentence,     // The translated word (Nepali) - camelCase
+      currentLetter: result.nepali,       // The current character (Nepali)
       confidence: result.confidence
     });
   };
@@ -46,7 +47,7 @@ function SingleWordDetection() {
             </button>
           </div>
           <NepaliTranslation 
-            text={recognitionResult.nepali || "None"} 
+            text={recognitionResult.nepali || recognitionResult.currentLetter || "None"} 
             confidence={recognitionResult.confidence} 
           />
         </div>

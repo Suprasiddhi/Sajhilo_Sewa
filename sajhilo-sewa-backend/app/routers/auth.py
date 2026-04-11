@@ -100,9 +100,15 @@ def login(
         (models.User.email == form.username) | (models.User.username == form.username)
     ).first()
  
-    # 2. Verify — same error for both "not found" and "wrong password"
-    #    (prevents user enumeration attacks)
-    if not user or not verify_password(form.password, user.hashed_password):
+    # 2. Verify existence first
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="user not found",
+        )
+
+    # 3. Verify password
+    if not verify_password(form.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password.",
@@ -168,6 +174,40 @@ def me(
     return user
  
  
+# ─────────────────────────────────────────────────────────────────────────────
+#  POST /auth/reset-password
+# ─────────────────────────────────────────────────────────────────────────────
+@router.post(
+    "/reset-password",
+    response_model=schemas.MessageResponse,
+    summary="Reset user password",
+)
+def reset_password(body: schemas.PasswordReset, db: Session = Depends(get_db)):
+    """
+    Pipeline:
+      1. Check if email exists.
+      2. Check if username matches that email.
+      3. Update the password.
+    """
+    user = db.query(models.User).filter(models.User.email == body.email).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="email do not exist"
+        )
+    
+    if user.username != body.username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="wrong username or email"
+        )
+    
+    user.hashed_password = get_password_hash(body.new_password)
+    db.commit()
+    
+    return {"message": "password changed"}
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  POST /auth/logout
 # ─────────────────────────────────────────────────────────────────────────────

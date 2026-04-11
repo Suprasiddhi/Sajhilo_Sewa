@@ -15,12 +15,12 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
     localStorage.removeItem('isAdminAuthenticated');
 
     // Redirect to login, but save the current location to redirect back after login
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location, error: 'user not logged in' }} replace />;
   }
 
   // Check admin rights if required
   if (adminOnly && !isAdmin) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/" state={{ error: 'access_denied' }} replace />;
   }
 
   return children;

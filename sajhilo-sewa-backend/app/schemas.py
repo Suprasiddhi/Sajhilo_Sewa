@@ -48,6 +48,13 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class PasswordReset(BaseModel):
+    """Body sent to /auth/reset-password."""
+    username: str
+    email: EmailStr
+    new_password: str
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 #  GESTURE SCHEMAS 
 # ─────────────────────────────────────────────────────────────────────────────

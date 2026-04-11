@@ -37,7 +37,14 @@ function App() {
           element={
             <MainLayout>
               <Routes>
-                <Route path="/" element={<HomePage />} />
+                <Route 
+                  path="/" 
+                  element={
+                    <ProtectedRoute>
+                      <HomePage />
+                    </ProtectedRoute>
+                  } 
+                />
                 
                 {/* Protected User Features */}
                 <Route 
