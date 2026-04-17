@@ -25,6 +25,7 @@ const AdminDashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentEditId, setCurrentEditId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingIds, setDeletingIds] = useState([]);
   const [gestureData, setGestureData] = useState({
     name: '',
     category: 'alphabets',
@@ -243,6 +244,7 @@ const AdminDashboard = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this gesture?")) return;
     try {
+      setDeletingIds(prev => [...prev, id]);
       const token = localStorage.getItem('access_token');
       const res = await fetch(`http://localhost:8000/gestures/${id}`, {
         method: 'DELETE',
@@ -251,15 +253,27 @@ const AdminDashboard = () => {
         }
       });
       if (res.ok) {
+        // Optimistic update for UI speed
+        setAllGestures(prev => prev.filter(g => g.id !== id));
         fetchStats();
-        fetchAllGestures(selectedCategory);
+        // Still fetch to ensure consistency
+        await fetchAllGestures(selectedCategory);
       }
     } catch (err) {
       console.error("Error deleting gesture:", err);
+      alert("Failed to delete gesture");
+    } finally {
+      setDeletingIds(prev => prev.filter(deletingId => deletingId !== id));
     }
   };
 
   const handleSubmit = async () => {
+    // Check for mandatory fields
+    if (!gestureData.name.trim()) {
+      alert("Please enter a gesture name.");
+      return;
+    }
+
     // Check for errors before submitting
     const hasErrors = gestureData.sections.some(s => s.media.some(m => m.error));
     if (hasErrors) {
@@ -524,6 +538,7 @@ const AdminDashboard = () => {
               setSelectedCategory={setSelectedCategory}
               handleEditClick={handleEditClick}
               handleDelete={handleDelete}
+              deletingIds={deletingIds}
               setIsModalOpen={setIsModalOpen}
               setGestureData={setGestureData}
               setIsEditing={setIsEditing}
@@ -561,7 +576,7 @@ const AdminDashboard = () => {
 
             <div className={styles.modalBody}>
               <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Main Gesture Name</label>
+                <label className={styles.formLabel}>Main Gesture Name <span style={{ color: '#ef4444' }}>*</span></label>
                 <input 
                   type="text" 
                   className={styles.formInput} 

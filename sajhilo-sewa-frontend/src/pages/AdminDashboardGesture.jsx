@@ -21,7 +21,8 @@ const AdminDashboardGesture = ({
   handleMediaChange,
   handleAddMedia,
   handleAddMoreSection,
-  handleSubmit
+  handleSubmit,
+  deletingIds = []
 }) => {
   return (
     <div className={styles.sectionContent}>
@@ -70,8 +71,14 @@ const AdminDashboardGesture = ({
           <div className={styles.loading}>Loading gestures...</div>
         ) : allGestures.length > 0 ? (
           allGestures.map(gesture => (
-            <div key={gesture.id} className={styles.videoCard}>
+            <div key={gesture.id} className={`${styles.videoCard} ${deletingIds.includes(gesture.id) ? styles.isDeleting : ''}`}>
               <div className={styles.thumbnail}>
+                {deletingIds.includes(gesture.id) && (
+                  <div className={styles.deletingOverlay}>
+                    <div className={styles.spinnerSmall}></div>
+                    <span className={styles.deletingLabel}>Deleting...</span>
+                  </div>
+                )}
                 {gesture.sections && gesture.sections[0] && gesture.sections[0].media && (
                   (() => {
                     const videoMedia = gesture.sections[0].media.find(m => m.media_type === 'video') || gesture.sections[0].media[0];
@@ -83,6 +90,7 @@ const AdminDashboardGesture = ({
                     className={styles.actionBtn} 
                     onClick={(e) => { e.stopPropagation(); handleEditClick(gesture); }}
                     title="Edit Gesture"
+                    disabled={deletingIds.includes(gesture.id)}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
@@ -93,6 +101,7 @@ const AdminDashboardGesture = ({
                     className={`${styles.actionBtn} ${styles.deleteBtn}`} 
                     onClick={(e) => { e.stopPropagation(); handleDelete(gesture.id); }}
                     title="Delete Gesture"
+                    disabled={deletingIds.includes(gesture.id)}
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6" />
