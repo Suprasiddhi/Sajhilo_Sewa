@@ -37,7 +37,7 @@ const AdminDashboardGesture = ({
                 id: Date.now(), 
                 title: '', 
                 description: '', 
-                media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
+                media: [{ id: Date.now(), media_type: 'video', url: '', file: null, error: '' }] 
               }]
             });
             setIsEditing(false);

@@ -32,7 +32,7 @@ const AdminDashboard = () => {
       id: Date.now(), 
       title: '', 
       description: '', 
-      media: [{ id: Date.now(), media_type: 'video', url: '', file: null }] 
+      media: [{ id: Date.now(), media_type: 'video', url: '', file: null, error: '' }] 
     }]
   });
 
@@ -143,7 +143,7 @@ const AdminDashboard = () => {
         id: Date.now(), 
         title: '', 
         description: '', 
-        media: [{ id: Date.now() + 1, media_type: 'video', url: '', file: null }] 
+        media: [{ id: Date.now() + 1, media_type: 'video', url: '', file: null, error: '' }] 
       }]
     }));
   };
@@ -153,7 +153,7 @@ const AdminDashboard = () => {
       ...prev,
       sections: prev.sections.map(s => s.id === sectionId ? {
         ...s,
-        media: [...s.media, { id: Date.now(), media_type: 'video', url: '', file: null }]
+        media: [...s.media, { id: Date.now(), media_type: 'video', url: '', file: null, error: '' }]
       } : s)
     }));
   };
@@ -163,7 +163,40 @@ const AdminDashboard = () => {
       ...prev,
       sections: prev.sections.map(s => s.id === sectionId ? {
         ...s,
-        media: s.media.map(m => m.id === mediaId ? { ...m, [field]: value } : m)
+        media: s.media.map(m => {
+          if (m.id === mediaId) {
+            const updatedItem = { ...m, [field]: value };
+            let error = '';
+            const type = updatedItem.media_type;
+            const url = updatedItem.url || '';
+            const file = updatedItem.file;
+
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv', 'flv', 'wmv'];
+
+            if (type === 'video') {
+              if (file && file.type.startsWith('image/')) {
+                error = 'Unsupported file format';
+              } else if (url) {
+                const ext = url.split('.').pop().split(/[?#]/)[0].toLowerCase();
+                if (imageExtensions.includes(ext)) {
+                  error = 'Unsupported file format';
+                }
+              }
+            } else if (type === 'image') {
+              if (file && file.type.startsWith('video/')) {
+                error = 'Unsupported file format';
+              } else if (url) {
+                const ext = url.split('.').pop().split(/[?#]/)[0].toLowerCase();
+                if (videoExtensions.includes(ext)) {
+                  error = 'Unsupported file format';
+                }
+              }
+            }
+            return { ...updatedItem, error };
+          }
+          return m;
+        })
       } : s)
     }));
   };
@@ -199,7 +232,7 @@ const AdminDashboard = () => {
       sections: gesture.sections.map(s => ({
         ...s,
         id: s.id,
-        media: s.media.map(m => ({ ...m, file: null }))
+        media: s.media.map(m => ({ ...m, file: null, error: '' }))
       }))
     });
     setIsEditing(true);
@@ -227,6 +260,13 @@ const AdminDashboard = () => {
   };
 
   const handleSubmit = async () => {
+    // Check for errors before submitting
+    const hasErrors = gestureData.sections.some(s => s.media.some(m => m.error));
+    if (hasErrors) {
+      alert("Please fix the unsupported file format errors before saving.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const updatedSections = await Promise.all(gestureData.sections.map(async (section) => {
@@ -631,6 +671,15 @@ const AdminDashboard = () => {
                             onChange={(e) => handleMediaChange(section.id, mediaItem.id, 'file', e.target.files[0])}
                           />
                         </div>
+
+                        {mediaItem.error && (
+                          <div className={styles.errorText}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                            {mediaItem.error}
+                          </div>
+                        )}
                       </div>
                     ))}
                     
