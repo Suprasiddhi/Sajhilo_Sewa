@@ -11,16 +11,22 @@ from app.services.websocket_handler import ws_handler
 # Create Database Tables
 Base.metadata.create_all(bind=engine)
 
+# 1. Initialize FastAPI instance
+# This is the core of your backend. It handles all incoming requests.
 app = FastAPI(title="Sajhilo Sewa API")
 
-# Register Routers
+# 2. Register Routers (Modularizing the API)
+# Each router handles a different part of the system (Authentication, Gestures, Stats, etc.)
+# This keeps the code clean and organized.
 app.include_router(auth.router)
 app.include_router(gestures.router)
 app.include_router(stats.router)
 app.include_router(users.router)
 app.include_router(ml.router, prefix="/api/ml", tags=["ML"])
 
-# Serve Static Files
+# 3. Serve Static Files
+# This allows the frontend to access uploaded files (like gesture videos/images)
+# via a direct link: http://localhost:8000/uploads/...
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 

@@ -111,3 +111,13 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level debug
 ```bash
 npm run dev
 ```
+
+## Train Dynamic Gesture Models (TCN + BiLSTM + ST-GCN)
+```bash
+python -m app.ml.train
+```
+
+## Train Alphabet Model
+```bash
+python -m app.ml.train_alphabet
+```
